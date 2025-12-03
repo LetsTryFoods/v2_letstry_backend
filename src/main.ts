@@ -19,12 +19,8 @@ async function bootstrap() {
     credentials: true,
   });
 
-<<<<<<< HEAD
   const configService = app.get(ConfigService);
   console.log("Server get started")
   await app.listen(configService.get('PORT') ?? 3000);
-=======
-  await app.listen(process.env.PORT ?? 3001);
->>>>>>> a08980e (update-env)
 }
 bootstrap();

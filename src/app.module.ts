@@ -18,6 +18,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { PolicyModule } from './policy/policy.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './admin/auth/jwt-auth.guard';
+import { CacheModule } from '@nestjs/cache-manager';
+import KeyvRedis from '@keyv/redis';
 
 @Module({
   imports: [
@@ -45,6 +47,19 @@ import { JwtAuthGuard } from './admin/auth/jwt-auth.guard';
       inject: [ConfigService],
     }),
     LoggerModule,
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
+        const redisConfig = configService.get('redis');
+        return {
+          stores: [
+            new KeyvRedis(`redis://${redisConfig.host}:${redisConfig.port}`),
+          ],
+        };
+      },
+      inject: [ConfigService],
+    }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       playground: true,

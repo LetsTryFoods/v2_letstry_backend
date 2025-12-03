@@ -18,4 +18,8 @@ export default () => ({
     bucketName: process.env.BUCKET_NAME,
     region: process.env.AWS_REGION,
   },
+  redis: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+  },
 });
