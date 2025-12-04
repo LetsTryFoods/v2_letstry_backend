@@ -7,7 +7,7 @@ import { getConnectionToken } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { FirebaseService } from '../src/firebase/firebase.service';
 
-describe('Banner (e2e)', () => {
+describe('Policy (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
   let adminToken: string;
@@ -81,34 +81,34 @@ describe('Banner (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await connection.collection('banners').deleteMany({});
+    await connection.collection('policies').deleteMany({});
   });
 
-  describe('Banner Queries (Public)', () => {
-    it('should get empty banners list', () => {
+  describe('Policy Queries (Public)', () => {
+    it('should get empty policies list', () => {
       return request(app.getHttpServer())
         .post('/graphql')
         .send({
           query: `
             query {
-              banners {
+              policies {
                 _id
-                name
+                title
+                type
               }
             }
           `,
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.banners).toEqual([]);
+          expect(res.body.data.policies).toEqual([]);
         });
     });
 
-    it('should get active banners', async () => {
-       // Insert one active and one inactive banner
-       await connection.collection('banners').insertMany([
-         { name: 'Active Banner', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-         { name: 'Inactive Banner', isActive: false, createdAt: new Date(), updatedAt: new Date() }
+    it('should get policies by type', async () => {
+       await connection.collection('policies').insertMany([
+         { title: 'Privacy Policy', type: 'privacy', content: 'Content', createdAt: new Date(), updatedAt: new Date() },
+         { title: 'Terms of Service', type: 'terms', content: 'Content', createdAt: new Date(), updatedAt: new Date() }
        ]);
 
       return request(app.getHttpServer())
@@ -116,110 +116,107 @@ describe('Banner (e2e)', () => {
         .send({
           query: `
             query {
-              activeBanners {
+              policiesByType(type: "privacy") {
                 _id
-                name
-                isActive
+                title
+                type
               }
             }
           `,
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.activeBanners).toHaveLength(1);
-          expect(res.body.data.activeBanners[0].name).toBe('Active Banner');
+          expect(res.body.data.policiesByType).toHaveLength(1);
+          expect(res.body.data.policiesByType[0].title).toBe('Privacy Policy');
         });
     });
 
-    it('should get banner by id', async () => {
-       const banner = await connection.collection('banners').insertOne({
-         name: 'Test Banner',
-         isActive: true,
+    it('should get policy by id', async () => {
+       const policy = await connection.collection('policies').insertOne({
+         title: 'Test Policy',
+         type: 'test',
+         content: 'Test Content',
          createdAt: new Date(),
          updatedAt: new Date()
        });
-       const bannerId = banner.insertedId.toString();
+       const policyId = policy.insertedId.toString();
 
       return request(app.getHttpServer())
         .post('/graphql')
         .send({
           query: `
             query {
-              banner(id: "${bannerId}") {
+              policy(id: "${policyId}") {
                 _id
-                name
+                title
+                content
               }
             }
           `,
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.banner.name).toBe('Test Banner');
+          expect(res.body.data.policy.title).toBe('Test Policy');
+          expect(res.body.data.policy.content).toBe('Test Content');
         });
     });
 
-    it('should return null for non-existent banner id', () => {
+    it('should return null for non-existent policy id', () => {
       return request(app.getHttpServer())
         .post('/graphql')
         .send({
           query: `
             query {
-              banner(id: "656e9b5a9d8f9b001f9b0000") {
+              policy(id: "656e9b5a9d8f9b001f9b0000") {
                 _id
-                name
+                title
               }
             }
           `,
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.banner).toBeNull();
+          expect(res.body.data.policy).toBeNull();
         });
     });
   });
 
-  describe('Banner Mutations (Admin Only)', () => {
-    it('should allow ADMIN to create a banner', () => {
+  describe('Policy Mutations (Admin Only)', () => {
+    it('should allow ADMIN to create a policy', () => {
       return request(app.getHttpServer())
         .post('/graphql')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           query: `
             mutation {
-              createBanner(input: {
-                name: "Admin Banner"
-                headline: "Headline"
-                subheadline: "Subheadline"
-                description: "Description"
-                imageUrl: "https://example.com/image.jpg"
-                mobileImageUrl: "https://example.com/mobile.jpg"
-                url: "https://example.com"
-                ctaText: "Click Here"
-                position: 1
-                isActive: true
+              createPolicy(input: {
+                title: "Refund Policy"
+                type: "refund"
+                content: "Refund Content"
               }) {
                 _id
-                name
-                isActive
+                title
+                type
               }
             }
           `,
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.createBanner.name).toBe('Admin Banner');
-          expect(res.body.data.createBanner.isActive).toBe(true);
+          expect(res.body.data.createPolicy.title).toBe('refund-policy');
+          expect(res.body.data.createPolicy.type).toBe('refund');
         });
     });
 
-    it('should allow ADMIN to update a banner', async () => {
-       const banner = await connection.collection('banners').insertOne({
-         name: 'Old Name',
-         isActive: true,
+    it('should allow ADMIN to update a policy', async () => {
+       const policy = await connection.collection('policies').insertOne({
+         title: 'Old Title',
+         type: 'old',
+         content: 'Old Content',
          createdAt: new Date(),
          updatedAt: new Date()
        });
-       const bannerId = banner.insertedId.toString();
+       const policyId = policy.insertedId.toString();
 
       return request(app.getHttpServer())
         .post('/graphql')
@@ -227,29 +224,30 @@ describe('Banner (e2e)', () => {
         .send({
           query: `
             mutation {
-              updateBanner(id: "${bannerId}", input: {
-                name: "New Name"
+              updatePolicy(id: "${policyId}", input: {
+                title: "New Title"
               }) {
                 _id
-                name
+                title
               }
             }
           `,
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.updateBanner.name).toBe('New Name');
+          expect(res.body.data.updatePolicy.title).toBe('new-title');
         });
     });
 
-    it('should allow ADMIN to delete a banner', async () => {
-       const banner = await connection.collection('banners').insertOne({
-         name: 'To Delete',
-         isActive: true,
+    it('should allow ADMIN to delete a policy', async () => {
+       const policy = await connection.collection('policies').insertOne({
+         title: 'To Delete',
+         type: 'delete',
+         content: 'Content',
          createdAt: new Date(),
          updatedAt: new Date()
        });
-       const bannerId = banner.insertedId.toString();
+       const policyId = policy.insertedId.toString();
 
       return request(app.getHttpServer())
         .post('/graphql')
@@ -257,28 +255,28 @@ describe('Banner (e2e)', () => {
         .send({
           query: `
             mutation {
-              deleteBanner(id: "${bannerId}") {
+              deletePolicy(id: "${policyId}") {
                 _id
-                name
+                title
               }
             }
           `,
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.deleteBanner.name).toBe('To Delete');
+          expect(res.body.data.deletePolicy.title).toBe('To Delete');
         });
     });
 
-    it('should return error when updating non-existent banner', () => {
+    it('should return error when updating non-existent policy', () => {
       return request(app.getHttpServer())
         .post('/graphql')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           query: `
             mutation {
-              updateBanner(id: "656e9b5a9d8f9b001f9b0000", input: {
-                name: "New Name"
+              updatePolicy(id: "656e9b5a9d8f9b001f9b0000", input: {
+                title: "New Title"
               }) {
                 _id
               }
@@ -292,28 +290,21 @@ describe('Banner (e2e)', () => {
     });
   });
 
-  describe('Banner Mutations (Forbidden for User)', () => {
-    it('should FORBID USER from creating a banner', () => {
+  describe('Policy Mutations (Forbidden for User)', () => {
+    it('should FORBID USER from creating a policy', () => {
       return request(app.getHttpServer())
         .post('/graphql')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           query: `
             mutation {
-              createBanner(input: {
-                name: "User Banner"
-                headline: "Headline"
-                subheadline: "Subheadline"
-                description: "Description"
-                imageUrl: "https://example.com/image.jpg"
-                mobileImageUrl: "https://example.com/mobile.jpg"
-                url: "https://example.com"
-                ctaText: "Click Here"
-                position: 1
-                isActive: true
+              createPolicy(input: {
+                title: "User Policy"
+                type: "user"
+                content: "Content"
               }) {
                 _id
-                name
+                title
               }
             }
           `,
@@ -325,14 +316,15 @@ describe('Banner (e2e)', () => {
         });
     });
 
-    it('should FORBID USER from updating a banner', async () => {
-       const banner = await connection.collection('banners').insertOne({
-         name: 'Test',
-         isActive: true,
+    it('should FORBID USER from updating a policy', async () => {
+       const policy = await connection.collection('policies').insertOne({
+         title: 'Test',
+         type: 'test',
+         content: 'Content',
          createdAt: new Date(),
          updatedAt: new Date()
        });
-       const bannerId = banner.insertedId.toString();
+       const policyId = policy.insertedId.toString();
 
       return request(app.getHttpServer())
         .post('/graphql')
@@ -340,8 +332,8 @@ describe('Banner (e2e)', () => {
         .send({
           query: `
             mutation {
-              updateBanner(id: "${bannerId}", input: {
-                name: "Hacked"
+              updatePolicy(id: "${policyId}", input: {
+                title: "Hacked"
               }) {
                 _id
               }
@@ -355,14 +347,15 @@ describe('Banner (e2e)', () => {
         });
     });
 
-    it('should FORBID USER from deleting a banner', async () => {
-       const banner = await connection.collection('banners').insertOne({
-         name: 'Test',
-         isActive: true,
+    it('should FORBID USER from deleting a policy', async () => {
+       const policy = await connection.collection('policies').insertOne({
+         title: 'Test',
+         type: 'test',
+         content: 'Content',
          createdAt: new Date(),
          updatedAt: new Date()
        });
-       const bannerId = banner.insertedId.toString();
+       const policyId = policy.insertedId.toString();
 
       return request(app.getHttpServer())
         .post('/graphql')
@@ -370,7 +363,7 @@ describe('Banner (e2e)', () => {
         .send({
           query: `
             mutation {
-              deleteBanner(id: "${bannerId}") {
+              deletePolicy(id: "${policyId}") {
                 _id
               }
             }

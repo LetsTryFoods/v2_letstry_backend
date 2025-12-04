@@ -6,20 +6,32 @@ import { Connection } from 'mongoose';
 import { getConnectionToken } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 
+import { FirebaseService } from '../src/firebase/firebase.service';
+
 describe('Dashboard (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
   let authToken: string;
+  let userToken: string;
+
+  const mockFirebaseService = {
+    verifyIdToken: jest.fn().mockResolvedValue({ uid: 'S3XyJV3kNZRue5MFxrLF5stbWrK2' }),
+    getUser: jest.fn().mockResolvedValue({ uid: 'S3XyJV3kNZRue5MFxrLF5stbWrK2' }),
+  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(FirebaseService)
+      .useValue(mockFirebaseService)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     connection = moduleFixture.get<Connection>(getConnectionToken());
     await app.init();
 
+    // 1. Setup Admin
     await connection.collection('admins').deleteMany({});
     const hashedPassword = await bcrypt.hash('password', 10);
     await connection.collection('admins').insertOne({
@@ -38,8 +50,30 @@ describe('Dashboard (e2e)', () => {
           }
         `,
       });
-
     authToken = loginResponse.body.data.adminLogin;
+
+    // 2. Setup User
+    await connection.collection('users').deleteMany({});
+    await connection.collection('firebaseauths').deleteMany({});
+    
+    const userSignupResponse = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({
+        query: `
+          mutation {
+            verifyOtpAndLogin(
+              idToken: "mock-firebase-token", 
+              input: {
+                phoneNumber: "+918851951492",
+                first_name: "User",
+                last_name: "Unknown",
+                firebaseUid: "S3XyJV3kNZRue5MFxrLF5stbWrK2"
+              }
+            )
+          }
+        `,
+      });
+    userToken = userSignupResponse.body.data.verifyOtpAndLogin;
   });
 
   afterAll(async () => {
@@ -206,6 +240,26 @@ describe('Dashboard (e2e)', () => {
         expect(stats.totalCategories).toBe(1);
         expect(stats.activeBanners).toBe(1);
         expect(stats.totalAdmins).toBe(1);
+      });
+  });
+
+  it('should FORBID USER from accessing dashboard stats', () => {
+    return request(app.getHttpServer())
+      .post('/graphql')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({
+        query: `
+          query {
+            dashboardStats {
+              totalProducts
+            }
+          }
+        `,
+      })
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.errors).toBeDefined();
+        expect(res.body.errors[0].message).toContain('Forbidden');
       });
   });
 });

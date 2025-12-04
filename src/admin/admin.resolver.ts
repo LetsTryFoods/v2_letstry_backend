@@ -2,7 +2,7 @@ import { Resolver, Mutation, Args, Context } from '@nestjs/graphql';
 import { AuthService } from './auth/auth.service';
 import { AdminService } from './admin.service';
 import { UnauthorizedException } from '@nestjs/common';
-import { Public } from './auth/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @Resolver()
 export class AdminResolver {

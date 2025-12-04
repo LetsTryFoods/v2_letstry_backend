@@ -11,10 +11,12 @@ import {
 import { ProductService } from './product.service';
 import { Product } from './product.graphql';
 import { CreateProductInput, UpdateProductInput } from './product.input';
-import { Public } from '../admin/auth/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { Category } from '../category/category.graphql';
 import { CategoryService } from '../category/category.service';
 import { PaginatedProducts, PaginationInput } from '../common/pagination';
+import { Role } from '../common/enums/role.enum';
+import { Roles } from '../common/decorators/roles.decorator';
 
 @Resolver(() => Product)
 export class ProductResolver {
@@ -110,6 +112,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => Product, { name: 'createProduct' })
+  @Roles(Role.ADMIN)
   async createProduct(
     @Args('input') input: CreateProductInput,
   ): Promise<Product> {
@@ -117,6 +120,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => Product, { name: 'updateProduct' })
+  @Roles(Role.ADMIN)
   async updateProduct(
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateProductInput,
@@ -125,6 +129,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => Product, { name: 'deleteProduct' })
+  @Roles(Role.ADMIN)
   async deleteProduct(
     @Args('id', { type: () => ID }) id: string,
   ): Promise<Product> {
@@ -132,6 +137,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => Product, { name: 'archiveProduct' })
+  @Roles(Role.ADMIN)
   async archiveProduct(
     @Args('id', { type: () => ID }) id: string,
   ): Promise<Product> {
@@ -139,6 +145,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => Product, { name: 'unarchiveProduct' })
+  @Roles(Role.ADMIN)
   async unarchiveProduct(
     @Args('id', { type: () => ID }) id: string,
   ): Promise<Product> {
@@ -146,6 +153,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => Product, { name: 'updateProductStock' })
+  @Roles(Role.ADMIN)
   async updateProductStock(
     @Args('id', { type: () => ID }) id: string,
     @Args('quantity', { type: () => Int }) quantity: number,

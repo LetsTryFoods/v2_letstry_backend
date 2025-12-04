@@ -6,27 +6,23 @@ import { AdminService } from './admin.service';
 import { AdminResolver } from './admin.resolver';
 import { AuthService } from './auth/auth.service';
 import { LocalStrategy } from './auth/local.strategy';
-import { JwtStrategy } from './auth/jwt.strategy';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { Admin, AdminSchema } from './admin.schema';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Admin.name, schema: AdminSchema }]),
     PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'defaultSecret',
-      signOptions: { expiresIn: '60m' },
-    }),
+    MongooseModule.forFeature([{ name: Admin.name, schema: AdminSchema }]),
+    PassportModule,
+    UserModule,
   ],
   providers: [
     AdminService,
     AdminResolver,
     AuthService,
     LocalStrategy,
-    JwtStrategy,
-    JwtAuthGuard,
   ],
-  exports: [AdminService, AuthService, JwtAuthGuard],
+  exports: [AdminService, AuthService],
 })
 export class AdminModule {}

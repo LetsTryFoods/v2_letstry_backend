@@ -2,7 +2,9 @@ import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { BannerService } from './banner.service';
 import { Banner } from './banner.graphql';
 import { CreateBannerInput, UpdateBannerInput } from './banner.input';
-import { Public } from '../admin/auth/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
+import { Role } from '../common/enums/role.enum';
+import { Roles } from '../common/decorators/roles.decorator';
 
 @Resolver(() => Banner)
 export class BannerResolver {
@@ -33,11 +35,13 @@ export class BannerResolver {
   }
 
   @Mutation(() => Banner, { name: 'createBanner' })
+  @Roles(Role.ADMIN)
   async createBanner(@Args('input') input: CreateBannerInput): Promise<Banner> {
     return this.bannerService.create(input);
   }
 
   @Mutation(() => Banner, { name: 'updateBanner' })
+  @Roles(Role.ADMIN)
   async updateBanner(
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateBannerInput,
@@ -46,6 +50,7 @@ export class BannerResolver {
   }
 
   @Mutation(() => Banner, { name: 'deleteBanner' })
+  @Roles(Role.ADMIN)
   async deleteBanner(
     @Args('id', { type: () => ID }) id: string,
   ): Promise<Banner> {

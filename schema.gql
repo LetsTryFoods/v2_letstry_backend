@@ -172,6 +172,8 @@ type Mutation {
   createPolicy(input: CreatePolicyInput!): Policy!
   updatePolicy(id: ID!, input: UpdatePolicyInput!): Policy!
   deletePolicy(id: ID!): Policy!
+  sendOtp(phoneNumber: String!): String!
+  verifyOtpAndLogin(idToken: String!, input: CreateUserInput): String!
 }
 
 input CreateBannerInput {
@@ -317,4 +319,15 @@ input UpdatePolicyInput {
   title: String
   content: String
   type: String
+}
+
+input CreateUserInput {
+  phoneNumber: String!
+  firebaseUid: String!
+  first_name: String!
+  last_name: String!
+  email: String
+  marketing_sms_opt_in: Boolean
+  signup_source: String
+  last_ip: String
 }

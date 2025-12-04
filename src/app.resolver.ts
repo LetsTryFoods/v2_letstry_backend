@@ -1,5 +1,5 @@
 import { Query, Resolver } from '@nestjs/graphql';
-import { Public } from './admin/auth/public.decorator';
+import { Public } from './common/decorators/public.decorator';
 
 @Resolver()
 export class AppResolver {

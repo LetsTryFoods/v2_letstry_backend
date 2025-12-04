@@ -2,7 +2,9 @@ import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { PolicyService } from './policy.service';
 import { Policy } from './policy.graphql';
 import { CreatePolicyInput, UpdatePolicyInput } from './policy.input';
-import { Public } from '../admin/auth/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
 
 @Resolver(() => Policy)
 export class PolicyResolver {
@@ -35,11 +37,13 @@ export class PolicyResolver {
   }
 
   @Mutation(() => Policy, { name: 'createPolicy' })
+  @Roles(Role.ADMIN)
   async createPolicy(@Args('input') input: CreatePolicyInput): Promise<Policy> {
     return this.policyService.create(input);
   }
 
   @Mutation(() => Policy, { name: 'updatePolicy' })
+  @Roles(Role.ADMIN)
   async updatePolicy(
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdatePolicyInput,
@@ -48,6 +52,7 @@ export class PolicyResolver {
   }
 
   @Mutation(() => Policy, { name: 'deletePolicy' })
+  @Roles(Role.ADMIN)
   async deletePolicy(
     @Args('id', { type: () => ID }) id: string,
   ): Promise<Policy> {

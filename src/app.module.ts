@@ -17,9 +17,14 @@ import { ProductModule } from './product/product.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PolicyModule } from './policy/policy.module';
 import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from './admin/auth/jwt-auth.guard';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { AuthModule } from './auth/auth.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis from '@keyv/redis';
+import { FirebaseModule } from './firebase/firebase.module';
+import { UserAuthModule } from './user-auth/user-auth.module';
+import { CaslModule } from './casl/casl.module';
+import { RolesGuard } from './common/guards/roles.guard';
 
 @Module({
   imports: [
@@ -74,6 +79,10 @@ import KeyvRedis from '@keyv/redis';
     ProductModule,
     DashboardModule,
     PolicyModule,
+    FirebaseModule,
+    UserAuthModule,
+    CaslModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [
@@ -82,6 +91,10 @@ import KeyvRedis from '@keyv/redis';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
 })

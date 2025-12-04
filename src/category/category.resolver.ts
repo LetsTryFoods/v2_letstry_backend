@@ -10,10 +10,12 @@ import {
 import { CategoryService } from './category.service';
 import { Category } from './category.graphql';
 import { CreateCategoryInput, UpdateCategoryInput } from './category.input';
-import { Public } from '../admin/auth/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { ProductService } from '../product/product.service';
 import { Product } from '../product/product.graphql';
 import { PaginatedCategories, PaginationInput } from '../common/pagination';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
 
 @Resolver(() => Category)
 export class CategoryResolver {
@@ -122,6 +124,7 @@ export class CategoryResolver {
   }
 
   @Mutation(() => Category, { name: 'createCategory' })
+  @Roles(Role.ADMIN)
   async createCategory(
     @Args('input') input: CreateCategoryInput,
   ): Promise<Category> {
@@ -129,6 +132,7 @@ export class CategoryResolver {
   }
 
   @Mutation(() => Category, { name: 'updateCategory' })
+  @Roles(Role.ADMIN)
   async updateCategory(
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateCategoryInput,
@@ -137,6 +141,7 @@ export class CategoryResolver {
   }
 
   @Mutation(() => Category, { name: 'archiveCategory' })
+  @Roles(Role.ADMIN)      
   async archiveCategory(
     @Args('id', { type: () => ID }) id: string,
   ): Promise<Category> {
@@ -144,6 +149,7 @@ export class CategoryResolver {
   }
 
   @Mutation(() => Category, { name: 'unarchiveCategory' })
+  @Roles(Role.ADMIN)
   async unarchiveCategory(
     @Args('id', { type: () => ID }) id: string,
   ): Promise<Category> {
@@ -151,6 +157,7 @@ export class CategoryResolver {
   }
 
   @ResolveField(() => [Product], { name: 'products' })
+  @Roles(Role.ADMIN)
   async getProducts(@Parent() category: Category): Promise<Product[]> {
     return this.productService.findByCategoryId(category.id);
   }
