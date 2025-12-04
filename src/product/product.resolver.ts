@@ -13,6 +13,7 @@ import { Product } from './product.graphql';
 import { CreateProductInput, UpdateProductInput } from './product.input';
 import { Public } from '../common/decorators/public.decorator';
 import { Category } from '../category/category.graphql';
+import { CategoryLoader } from '../category/category.loader';
 import { CategoryService } from '../category/category.service';
 import { PaginatedProducts, PaginationInput } from '../common/pagination';
 import { Role } from '../common/enums/role.enum';
@@ -22,7 +23,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 export class ProductResolver {
   constructor(
     private readonly productService: ProductService,
-    private readonly categoryService: CategoryService,
+    private readonly categoryLoader: CategoryLoader,
   ) {}
 
   @Query(() => PaginatedProducts, { name: 'products' })
@@ -164,6 +165,10 @@ export class ProductResolver {
   @ResolveField(() => Category, { name: 'category', nullable: true })
   async getCategory(@Parent() product: Product): Promise<Category | null> {
     if (!product.categoryId) return null;
-    return this.categoryService.findOne(product.categoryId, true) as any;
+    return (await this.categoryLoader.batchCategories.load(
+      product.categoryId,
+    )) as any;
   }
+
+
 }

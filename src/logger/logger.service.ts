@@ -42,10 +42,28 @@ export class WinstonLoggerService implements LoggerService {
             winston.format.json(),
           ),
         }),
+        new winston.transports.File({
+          filename: path.resolve(logConfig.redisFile),
+          level: 'info', 
+          format: winston.format.combine(
+            winston.format((info) => {
+              return info.context === 'Redis' ? info : false;
+            })(),
+            winston.format.timestamp(),
+            winston.format.errors({ stack: true }),
+            winston.format.json(),
+          ),
+        }),
         new winston.transports.Console({
           format: winston.format.combine(
             winston.format.colorize(),
-            winston.format.simple(),
+            winston.format.timestamp(),
+            winston.format.printf(({ timestamp, level, message, context, ...meta }) => {
+              const ctx = context ? `[${context}] ` : '';
+              const msg = typeof message === 'object' ? JSON.stringify(message, null, 2) : message;
+              const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
+              return `${timestamp} ${level}: ${ctx}${msg} ${metaStr}`;
+            }),
           ),
         }),
       ],
@@ -53,26 +71,32 @@ export class WinstonLoggerService implements LoggerService {
   }
 
   log(message: any, ...optionalParams: any[]) {
-    this.logger.info(message, ...optionalParams);
+    const context = optionalParams[optionalParams.length - 1];
+    this.logger.info(message, { context });
   }
 
   error(message: any, ...optionalParams: any[]) {
-    this.logger.error(message, ...optionalParams);
+    const context = optionalParams[optionalParams.length - 1];
+    this.logger.error(message, { context });
   }
 
   warn(message: any, ...optionalParams: any[]) {
-    this.logger.warn(message, ...optionalParams);
+    const context = optionalParams[optionalParams.length - 1];
+    this.logger.warn(message, { context });
   }
 
   debug?(message: any, ...optionalParams: any[]) {
-    this.logger.debug(message, ...optionalParams);
+    const context = optionalParams[optionalParams.length - 1];
+    this.logger.debug(message, { context });
   }
 
   verbose?(message: any, ...optionalParams: any[]) {
-    this.logger.verbose(message, ...optionalParams);
+    const context = optionalParams[optionalParams.length - 1];
+    this.logger.verbose(message, { context });
   }
 
   fatal?(message: any, ...optionalParams: any[]) {
-    this.logger.error(message, ...optionalParams);
+    const context = optionalParams[optionalParams.length - 1];
+    this.logger.error(message, { context });
   }
 }

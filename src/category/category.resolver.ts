@@ -141,7 +141,7 @@ export class CategoryResolver {
   }
 
   @Mutation(() => Category, { name: 'archiveCategory' })
-  @Roles(Role.ADMIN)      
+  @Roles(Role.ADMIN)
   async archiveCategory(
     @Args('id', { type: () => ID }) id: string,
   ): Promise<Category> {
@@ -155,7 +155,6 @@ export class CategoryResolver {
   ): Promise<Category> {
     return this.categoryService.unarchive(id) as any;
   }
-
   @ResolveField(() => [Product], { name: 'products' })
   @Roles(Role.ADMIN)
   async getProducts(@Parent() category: Category): Promise<Product[]> {

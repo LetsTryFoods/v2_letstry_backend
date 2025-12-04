@@ -18,7 +18,7 @@ export class Category {
   @Prop()
   description: string;
 
-  @Prop({ type: String, default: null })
+  @Prop({ type: String, default: null, index: true })
   parentId: string | undefined;
 
   @Prop()
@@ -45,3 +45,5 @@ export const CategorySchema = SchemaFactory.createForClass(Category);
 CategorySchema.virtual('id').get(function () {
   return this._id.toHexString();
 });
+
+CategorySchema.index({ createdAt: -1 });

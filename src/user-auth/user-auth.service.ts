@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { FirebaseService } from '../firebase/firebase.service';
 import { UserService } from '../user/user.service';
-import { FirebaseAuthService } from '../user/firebase-auth.service';
+import { FirebaseAuthService } from '../identity/firebase-auth.service';
 import { CreateUserInput } from './user-auth.input';
 import { Role } from '../common/enums/role.enum';
 

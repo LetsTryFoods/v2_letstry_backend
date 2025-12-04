@@ -7,13 +7,20 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Category, CategoryDocument } from './category.schema';
 import { CreateCategoryInput, UpdateCategoryInput } from './category.input';
-import { SlugUtils } from '../utils/slug.utils';
+import { SlugService } from '../common/services/slug.service';
 import { PaginationResult } from '../common/pagination';
+import { CacheService } from '../cache/cache.service';
+import { CacheKeyFactory } from '../cache/cache-key.factory';
+import { CacheInvalidatorService } from '../cache/cache-invalidator.service';
 
 @Injectable()
 export class CategoryService {
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
+    private readonly slugService: SlugService,
+    private readonly cacheService: CacheService,
+    private readonly cacheKeyFactory: CacheKeyFactory,
+    private readonly cacheInvalidatorService: CacheInvalidatorService,
   ) {}
 
   async checkSlugExists(slug: string, excludeId?: string): Promise<boolean> {
@@ -28,8 +35,8 @@ export class CategoryService {
   async create(input: CreateCategoryInput): Promise<Category> {
     let slug = input.slug;
     if (!slug) {
-      slug = SlugUtils.generateSlug(input.name);
-      slug = await SlugUtils.generateUniqueSlug(slug, (s) =>
+      slug = this.slugService.generateSlug(input.name);
+      slug = await this.slugService.generateUniqueSlug(slug, (s) =>
         this.checkSlugExists(s),
       );
     } else {
@@ -46,15 +53,34 @@ export class CategoryService {
       productCount: 0,
       isArchived: input.isArchived ?? false,
     });
-    return category.save();
+    const savedCategory = await category.save();
+    await this.cacheInvalidatorService.invalidateCategory(savedCategory.slug);
+    return savedCategory;
   }
 
   async findAll(includeArchived = false): Promise<Category[]> {
+    // Only cache non-archived (public) lists for now to keep it simple
+    if (!includeArchived) {
+      const versionKey = this.cacheKeyFactory.getCategoryListVersionKey();
+      const version = await this.cacheService.getVersion(versionKey);
+      const key = this.cacheKeyFactory.getCategoryListKey(version);
+
+      const cached = await this.cacheService.get<Category[]>(key);
+      if (cached) return cached;
+
+      const data = await this.categoryModel.find({ isArchived: false }).exec();
+      await this.cacheService.set(key, data);
+      return data;
+    }
+
     const filter = includeArchived ? {} : { isArchived: false };
     return this.categoryModel.find(filter).exec();
   }
 
   async findOne(id: string, includeArchived = false): Promise<Category | null> {
+    // Caching by ID is tricky if we primarily use slugs. 
+    // We'll skip caching ID lookups for now unless critical, 
+    // or we can map ID -> Slug -> Cache, but that's complex.
     const filter = includeArchived
       ? { _id: id }
       : { _id: id, isArchived: false };
@@ -65,6 +91,21 @@ export class CategoryService {
     slug: string,
     includeArchived = false,
   ): Promise<Category | null> {
+    if (!includeArchived) {
+      const versionKey = this.cacheKeyFactory.getCategoryDetailVersionKey(slug);
+      const version = await this.cacheService.getVersion(versionKey);
+      const key = this.cacheKeyFactory.getCategoryDetailKey(slug, version);
+
+      const cached = await this.cacheService.get<Category>(key);
+      if (cached) return cached;
+
+      const data = await this.categoryModel.findOne({ slug, isArchived: false }).exec();
+      if (data) {
+        await this.cacheService.set(key, data);
+      }
+      return data;
+    }
+
     const filter = includeArchived ? { slug } : { slug, isArchived: false };
     return this.categoryModel.findOne(filter).exec();
   }
@@ -73,6 +114,8 @@ export class CategoryService {
     parentId: string,
     includeArchived = false,
   ): Promise<Category[]> {
+    // Caching children lists could be done with a specific key pattern like category:children:{parentId}
+    // For now, we'll leave this uncached or rely on the main list cache if the client filters there.
     const filter = includeArchived
       ? { parentId }
       : { parentId, isArchived: false };
@@ -199,6 +242,7 @@ export class CategoryService {
     if (!category) {
       throw new NotFoundException(`Category with id ${id} not found`);
     }
+    await this.cacheInvalidatorService.invalidateCategory(category.slug);
     return category;
   }
 
@@ -209,6 +253,7 @@ export class CategoryService {
     if (!category) {
       throw new NotFoundException(`Category with id ${id} not found`);
     }
+    await this.cacheInvalidatorService.invalidateCategory(category.slug);
     return category;
   }
 
@@ -219,6 +264,7 @@ export class CategoryService {
     if (!category) {
       throw new NotFoundException(`Category with id ${id} not found`);
     }
+    await this.cacheInvalidatorService.invalidateCategory(category.slug);
     return category;
   }
 
@@ -227,6 +273,7 @@ export class CategoryService {
     if (!category) {
       throw new NotFoundException(`Category with id ${id} not found`);
     }
+    await this.cacheInvalidatorService.invalidateCategory(category.slug);
     return category;
   }
 
@@ -234,6 +281,10 @@ export class CategoryService {
     await this.categoryModel
       .updateOne({ _id: id }, { $inc: { productCount: 1 } })
       .exec();
+    // Note: We might want to invalidate cache here too if product count is displayed in cached lists
+    // But frequent updates might thrash the cache. 
+    // For now, we'll assume product count updates don't need immediate cache invalidation 
+    // or we can invalidate the specific category detail if needed.
   }
 
   async decrementProductCount(id: string): Promise<void> {

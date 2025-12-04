@@ -187,3 +187,4 @@ ProductSchema.index({ categoryId: 1 });
 ProductSchema.index({ sku: 1 });
 ProductSchema.index({ keywords: 1 });
 ProductSchema.index({ availabilityStatus: 1 });
+ProductSchema.index({ createdAt: -1 });

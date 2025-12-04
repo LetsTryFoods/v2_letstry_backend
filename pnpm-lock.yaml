@@ -68,6 +68,9 @@ importers:
       cache-manager:
         specifier: ^7.2.5
         version: 7.2.5
+      dataloader:
+        specifier: ^2.2.3
+        version: 2.2.3
       firebase-admin:
         specifier: ^13.6.0
         version: 13.6.0
@@ -2885,6 +2888,9 @@ packages:
 
   custom-error-instance@2.1.1:
     resolution: {integrity: sha512-p6JFxJc3M4OTD2li2qaHkDCw9SfMw82Ldr6OC9Je1aXiGfhx2W8p3GaoeaGrPJTUN9NirTM/KTxHWMUdR1rsUg==}
+
+  dataloader@2.2.3:
+    resolution: {integrity: sha512-y2krtASINtPFS1rSDjacrFgn1dcUuoREVabwlOGOe4SdxenREqwjwjElAdwvbGM7kgZz9a3KVicWR7vcz8rnzA==}
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -8632,6 +8638,8 @@ snapshots:
   cssfilter@0.0.10: {}
 
   custom-error-instance@2.1.1: {}
+
+  dataloader@2.2.3: {}
 
   debug@4.4.3:
     dependencies:

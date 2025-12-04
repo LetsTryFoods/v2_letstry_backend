@@ -11,6 +11,7 @@ export default () => ({
     level: process.env.LOG_LEVEL || 'info',
     errorFile: process.env.ERROR_LOG_FILE || 'logs/error.log',
     debugFile: process.env.DEBUG_LOG_FILE || 'logs/debug.log',
+    redisFile: process.env.REDIS_LOG_FILE || 'logs/redis.log',
   },
   aws: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,

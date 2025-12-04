@@ -5,6 +5,8 @@ import { CategoryResolver } from './category.resolver';
 import { Category, CategorySchema } from './category.schema';
 import { ProductModule } from '../product/product.module';
 
+import { CategoryLoader } from './category.loader';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -12,7 +14,7 @@ import { ProductModule } from '../product/product.module';
     ]),
     forwardRef(() => ProductModule),
   ],
-  providers: [CategoryService, CategoryResolver],
-  exports: [CategoryService],
+  providers: [CategoryService, CategoryResolver, CategoryLoader],
+  exports: [CategoryService, CategoryLoader],
 })
 export class CategoryModule {}

@@ -8,7 +8,7 @@ import { Model } from 'mongoose';
 import { Product, ProductDocument } from './product.schema';
 import { CreateProductInput, UpdateProductInput } from './product.input';
 import { WinstonLoggerService } from '../logger/logger.service';
-import { SlugUtils } from '../utils/slug.utils';
+import { SlugService } from '../common/services/slug.service';
 import { PaginationResult } from '../common/pagination';
 
 @Injectable()
@@ -16,6 +16,7 @@ export class ProductService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     private readonly logger: WinstonLoggerService,
+    private readonly slugService: SlugService,
   ) {}
 
   async checkSlugExists(slug: string, excludeId?: string): Promise<boolean> {
@@ -30,8 +31,8 @@ export class ProductService {
   async create(createProductInput: CreateProductInput): Promise<Product> {
     let slug = createProductInput.slug;
     if (!slug) {
-      slug = SlugUtils.generateSlug(createProductInput.name);
-      slug = await SlugUtils.generateUniqueSlug(slug, (s) =>
+      slug = this.slugService.generateSlug(createProductInput.name);
+      slug = await this.slugService.generateUniqueSlug(slug, (s) =>
         this.checkSlugExists(s),
       );
     } else {
@@ -141,15 +142,16 @@ export class ProductService {
     }
 
     const skip = (page - 1) * limit;
-    const totalCount = await this.productModel.countDocuments(filter).exec();
+    const [totalCount, items] = await Promise.all([
+      this.productModel.countDocuments(filter).exec(),
+      this.productModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+    ]);
     const totalPages = Math.ceil(totalCount / limit);
-
-    const items = await this.productModel
-      .find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .exec();
 
     return {
       items,
@@ -179,15 +181,16 @@ export class ProductService {
         };
 
     const skip = (page - 1) * limit;
-    const totalCount = await this.productModel.countDocuments(filter).exec();
+    const [totalCount, items] = await Promise.all([
+      this.productModel.countDocuments(filter).exec(),
+      this.productModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+    ]);
     const totalPages = Math.ceil(totalCount / limit);
-
-    const items = await this.productModel
-      .find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .exec();
 
     return {
       items,
@@ -224,15 +227,16 @@ export class ProductService {
     }
 
     const skip = (page - 1) * limit;
-    const totalCount = await this.productModel.countDocuments(filter).exec();
+    const [totalCount, items] = await Promise.all([
+      this.productModel.countDocuments(filter).exec(),
+      this.productModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+    ]);
     const totalPages = Math.ceil(totalCount / limit);
-
-    const items = await this.productModel
-      .find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .exec();
 
     return {
       items,

@@ -28,25 +28,28 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-type Category {
-  id: ID!
-  name: String!
-  slug: String!
-  description: String
-  parentId: String
-  imageUrl: String
-  codeValue: String!
-  inCodeSet: String!
-  productCount: Float!
-  isArchived: Boolean!
-  products: [Product!]!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
-
 type ProductImage {
   url: String!
   alt: String!
+}
+
+type DashboardStats {
+  totalProducts: Float!
+  archivedProducts: Float!
+  inStockProducts: Float!
+  outOfStockProducts: Float!
+  totalCategories: Float!
+  activeBanners: Float!
+  totalAdmins: Float!
+}
+
+type Policy {
+  _id: ID!
+  title: String!
+  content: String!
+  type: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 type Product {
@@ -89,6 +92,22 @@ type Product {
   category: Category
 }
 
+type Category {
+  id: ID!
+  name: String!
+  slug: String!
+  description: String
+  parentId: String
+  imageUrl: String
+  codeValue: String!
+  inCodeSet: String!
+  productCount: Float!
+  isArchived: Boolean!
+  products: [Product!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
 type PaginationMeta {
   totalCount: Int!
   page: Int!
@@ -108,40 +127,21 @@ type PaginatedCategories {
   meta: PaginationMeta!
 }
 
-type DashboardStats {
-  totalProducts: Float!
-  archivedProducts: Float!
-  inStockProducts: Float!
-  outOfStockProducts: Float!
-  totalCategories: Float!
-  activeBanners: Float!
-  totalAdmins: Float!
-}
-
-type Policy {
-  _id: ID!
-  title: String!
-  content: String!
-  type: String!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
-
 type Query {
   hello: String!
-  banners: [Banner!]!
-  activeBanners: [Banner!]!
-  banner(id: ID!): Banner
-  categories(pagination: PaginationInput! = {page: 1, limit: 10}, includeArchived: Boolean! = false): PaginatedCategories!
-  rootCategories(pagination: PaginationInput! = {page: 1, limit: 10}, includeArchived: Boolean! = false): PaginatedCategories!
-  categoryChildren(parentId: ID!, pagination: PaginationInput! = {page: 1, limit: 10}, includeArchived: Boolean! = false): PaginatedCategories!
-  category(id: ID!, includeArchived: Boolean! = false): Category
-  categoryBySlug(slug: String!, includeArchived: Boolean! = false): Category
   products(pagination: PaginationInput! = {page: 1, limit: 10}, includeOutOfStock: Boolean! = false): PaginatedProducts!
   product(id: ID!): Product
   productBySlug(slug: String!): Product
   productsByCategory(categoryId: ID!, pagination: PaginationInput! = {page: 1, limit: 10}): PaginatedProducts!
   searchProducts(searchTerm: String!, pagination: PaginationInput! = {page: 1, limit: 10}): PaginatedProducts!
+  categories(pagination: PaginationInput! = {page: 1, limit: 10}, includeArchived: Boolean! = false): PaginatedCategories!
+  rootCategories(pagination: PaginationInput! = {page: 1, limit: 10}, includeArchived: Boolean! = false): PaginatedCategories!
+  categoryChildren(parentId: ID!, pagination: PaginationInput! = {page: 1, limit: 10}, includeArchived: Boolean! = false): PaginatedCategories!
+  category(id: ID!, includeArchived: Boolean! = false): Category
+  categoryBySlug(slug: String!, includeArchived: Boolean! = false): Category
+  banners: [Banner!]!
+  activeBanners: [Banner!]!
+  banner(id: ID!): Banner
   dashboardStats: DashboardStats!
   policies: [Policy!]!
   policiesByType(type: String!): [Policy!]!
@@ -154,84 +154,26 @@ input PaginationInput {
 }
 
 type Mutation {
-  adminLogin(email: String!, password: String!): String!
-  createAdmin(email: String!, password: String!): String!
-  createBanner(input: CreateBannerInput!): Banner!
-  updateBanner(id: ID!, input: UpdateBannerInput!): Banner!
-  deleteBanner(id: ID!): Banner!
-  createCategory(input: CreateCategoryInput!): Category!
-  updateCategory(id: ID!, input: UpdateCategoryInput!): Category!
-  archiveCategory(id: ID!): Category!
-  unarchiveCategory(id: ID!): Category!
   createProduct(input: CreateProductInput!): Product!
   updateProduct(id: ID!, input: UpdateProductInput!): Product!
   deleteProduct(id: ID!): Product!
   archiveProduct(id: ID!): Product!
   unarchiveProduct(id: ID!): Product!
   updateProductStock(id: ID!, quantity: Int!): Product!
+  createCategory(input: CreateCategoryInput!): Category!
+  updateCategory(id: ID!, input: UpdateCategoryInput!): Category!
+  archiveCategory(id: ID!): Category!
+  unarchiveCategory(id: ID!): Category!
+  adminLogin(email: String!, password: String!): String!
+  createAdmin(email: String!, password: String!): String!
+  createBanner(input: CreateBannerInput!): Banner!
+  updateBanner(id: ID!, input: UpdateBannerInput!): Banner!
+  deleteBanner(id: ID!): Banner!
   createPolicy(input: CreatePolicyInput!): Policy!
   updatePolicy(id: ID!, input: UpdatePolicyInput!): Policy!
   deletePolicy(id: ID!): Policy!
   sendOtp(phoneNumber: String!): String!
   verifyOtpAndLogin(idToken: String!, input: CreateUserInput): String!
-}
-
-input CreateBannerInput {
-  name: String!
-  headline: String!
-  subheadline: String!
-  description: String
-  imageUrl: String!
-  mobileImageUrl: String!
-  thumbnailUrl: String
-  url: String!
-  ctaText: String!
-  position: Float!
-  isActive: Boolean
-  startDate: DateTime
-  endDate: DateTime
-  backgroundColor: String
-  textColor: String
-}
-
-input UpdateBannerInput {
-  name: String
-  headline: String
-  subheadline: String
-  description: String
-  imageUrl: String
-  mobileImageUrl: String
-  thumbnailUrl: String
-  url: String
-  ctaText: String
-  position: Float
-  isActive: Boolean
-  startDate: DateTime
-  endDate: DateTime
-  backgroundColor: String
-  textColor: String
-}
-
-input CreateCategoryInput {
-  name: String!
-  slug: String
-  description: String
-  parentId: String
-  imageUrl: String
-  codeValue: String!
-  inCodeSet: String!
-  isArchived: Boolean
-}
-
-input UpdateCategoryInput {
-  name: String
-  slug: String
-  description: String
-  parentId: String
-  imageUrl: String
-  codeValue: String
-  inCodeSet: String
-  isArchived: Boolean
 }
 
 input CreateProductInput {
@@ -307,6 +249,64 @@ input UpdateProductInput {
   keywords: [String!]
   tags: [String!]
   discountSource: String
+}
+
+input CreateCategoryInput {
+  name: String!
+  slug: String
+  description: String
+  parentId: String
+  imageUrl: String
+  codeValue: String!
+  inCodeSet: String!
+  isArchived: Boolean
+}
+
+input UpdateCategoryInput {
+  name: String
+  slug: String
+  description: String
+  parentId: String
+  imageUrl: String
+  codeValue: String
+  inCodeSet: String
+  isArchived: Boolean
+}
+
+input CreateBannerInput {
+  name: String!
+  headline: String!
+  subheadline: String!
+  description: String
+  imageUrl: String!
+  mobileImageUrl: String!
+  thumbnailUrl: String
+  url: String!
+  ctaText: String!
+  position: Float!
+  isActive: Boolean
+  startDate: DateTime
+  endDate: DateTime
+  backgroundColor: String
+  textColor: String
+}
+
+input UpdateBannerInput {
+  name: String
+  headline: String
+  subheadline: String
+  description: String
+  imageUrl: String
+  mobileImageUrl: String
+  thumbnailUrl: String
+  url: String
+  ctaText: String
+  position: Float
+  isActive: Boolean
+  startDate: DateTime
+  endDate: DateTime
+  backgroundColor: String
+  textColor: String
 }
 
 input CreatePolicyInput {
