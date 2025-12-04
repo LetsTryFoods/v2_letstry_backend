@@ -3,6 +3,7 @@ import { CacheService } from './cache.service';
 import { CacheKeyFactory } from './cache-key.factory';
 import { Product } from '../product/product.schema';
 import { Category } from '../category/category.schema';
+import { Policy } from '../policy/policy.schema';
 
 @Injectable()
 export class CacheInvalidatorService {
@@ -86,8 +87,10 @@ export class CacheInvalidatorService {
     await this.cacheService.bumpVersion(this.cacheKeyFactory.getBannerListVersionKey());
   }
 
-  async invalidatePolicy(slug: string) {
+  async invalidatePolicy(policy: Policy) {
     await this.cacheService.bumpVersion(this.cacheKeyFactory.getPolicyListVersionKey());
-    await this.cacheService.bumpVersion(this.cacheKeyFactory.getPolicyDetailVersionKey(slug));
+    if (policy._id) await this.cacheService.bumpVersion(this.cacheKeyFactory.getPolicyDetailVersionKey(policy._id.toString()));
+    if (policy.title) await this.cacheService.bumpVersion(this.cacheKeyFactory.getPolicyDetailVersionKey(policy.title));
+    if (policy.type) await this.cacheService.bumpVersion(this.cacheKeyFactory.getPolicyDetailVersionKey(policy.type));
   }
 }

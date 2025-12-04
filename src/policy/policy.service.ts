@@ -4,31 +4,67 @@ import { Model } from 'mongoose';
 import { Policy, PolicyDocument } from './policy.schema';
 import { CreatePolicyInput, UpdatePolicyInput } from './policy.input';
 import { SlugUtils } from '../utils/slug.utils';
+import { CacheService } from '../cache/cache.service';
+import { CacheKeyFactory } from '../cache/cache-key.factory';
+import { CacheInvalidatorService } from '../cache/cache-invalidator.service';
 
 @Injectable()
 export class PolicyService {
+  private readonly TTL = 15552000000; // 180 days in milliseconds
+
   constructor(
     @InjectModel(Policy.name) private policyModel: Model<PolicyDocument>,
+    private readonly cacheService: CacheService,
+    private readonly cacheKeyFactory: CacheKeyFactory,
+    private readonly cacheInvalidatorService: CacheInvalidatorService,
   ) {}
 
   async create(createPolicyInput: CreatePolicyInput): Promise<Policy> {
     const input = { ...createPolicyInput, title: SlugUtils.generateSlug(createPolicyInput.title) };
     const createdPolicy = new this.policyModel(input);
-    return createdPolicy.save();
+    const savedPolicy = await createdPolicy.save();
+    await this.cacheInvalidatorService.invalidatePolicy(savedPolicy);
+    return savedPolicy;
   }
 
   async findAll(): Promise<Policy[]> {
-    return this.policyModel.find().lean().exec() as unknown as Policy[];
+    const versionKey = this.cacheKeyFactory.getPolicyListVersionKey();
+    const version = await this.cacheService.getVersion(versionKey);
+    const key = this.cacheKeyFactory.getPolicyListKey(version);
+
+    const cached = await this.cacheService.get<Policy[]>(key);
+    if (cached) return cached;
+
+    const data = (await this.policyModel.find().lean().exec()) as unknown as Policy[];
+    await this.cacheService.set(key, data, this.TTL);
+    return data;
   }
 
   async findByType(type: string): Promise<Policy[]> {
-    return this.policyModel
+    const versionKey = this.cacheKeyFactory.getPolicyDetailVersionKey(type);
+    const version = await this.cacheService.getVersion(versionKey);
+    const key = this.cacheKeyFactory.getPolicyDetailKey(type, version);
+
+    const cached = await this.cacheService.get<Policy[]>(key);
+    if (cached) return cached;
+
+    const data = (await this.policyModel
       .find({ type })
       .lean()
-      .exec() as unknown as Policy[];
+      .exec()) as unknown as Policy[];
+    
+    await this.cacheService.set(key, data, this.TTL);
+    return data;
   }
 
   async findOne(id: string): Promise<Policy> {
+    const versionKey = this.cacheKeyFactory.getPolicyDetailVersionKey(id);
+    const version = await this.cacheService.getVersion(versionKey);
+    const key = this.cacheKeyFactory.getPolicyDetailKey(id, version);
+
+    const cached = await this.cacheService.get<Policy>(key);
+    if (cached) return cached;
+
     const policy = (await this.policyModel
       .findById(id)
       .lean()
@@ -36,6 +72,7 @@ export class PolicyService {
     if (!policy) {
       throw new NotFoundException(`Policy with ID ${id} not found`);
     }
+    await this.cacheService.set(key, policy, this.TTL);
     return policy;
   }
 
@@ -54,6 +91,7 @@ export class PolicyService {
     if (!policy) {
       throw new NotFoundException(`Policy with ID ${id} not found`);
     }
+    await this.cacheInvalidatorService.invalidatePolicy(policy);
     return policy;
   }
 
@@ -65,6 +103,7 @@ export class PolicyService {
     if (!policy) {
       throw new NotFoundException(`Policy with ID ${id} not found`);
     }
+    await this.cacheInvalidatorService.invalidatePolicy(policy);
     return policy;
   }
 }
