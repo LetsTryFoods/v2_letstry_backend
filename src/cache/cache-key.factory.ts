@@ -2,27 +2,47 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class CacheKeyFactory {
-  // --- Product Keys ---
 
-  getProductListVersionKey(categorySlug: string): string {
-    return `product:list:category:${categorySlug}:version`;
+
+  getProductGlobalListVersionKey(): string {
+    return `product:list:global:version`;
+  }
+
+  getProductGlobalListKey(
+    page: number,
+    limit: number,
+    sort: string,
+    version: number,
+    includeOutOfStock: boolean,
+    includeArchived: boolean,
+  ): string {
+    return `product:list:global:v${version}:page:${page}:limit:${limit}:sort:${sort}:oos:${includeOutOfStock}:archived:${includeArchived}`;
+  }
+
+  // Category Product List
+  getProductListVersionKey(categoryId: string): string {
+    return `product:list:category:${categoryId}:version`;
   }
 
   getProductListKey(
-    categorySlug: string,
-    sort: string,
+    categoryId: string,
     page: number,
+    limit: number,
+    sort: string,
     version: number,
+    includeOutOfStock: boolean,
+    includeArchived: boolean,
   ): string {
-    return `product:list:category:${categorySlug}:v${version}:sort:${sort}:page:${page}`;
+    return `product:list:category:${categoryId}:v${version}:page:${page}:limit:${limit}:sort:${sort}:oos:${includeOutOfStock}:archived:${includeArchived}`;
   }
 
-  getProductDetailVersionKey(productId: string): string {
-    return `product:detail:${productId}:version`;
+  // Product Detail
+  getProductDetailVersionKey(identifier: string): string {
+    return `product:detail:${identifier}:version`;
   }
 
-  getProductDetailKey(productId: string, version: number): string {
-    return `product:detail:${productId}:v${version}`;
+  getProductDetailKey(identifier: string, version: number): string {
+    return `product:detail:${identifier}:v${version}`;
   }
 
   // --- Category Keys ---
@@ -35,12 +55,32 @@ export class CacheKeyFactory {
     return `category:list:v${version}`;
   }
 
-  getCategoryDetailVersionKey(slug: string): string {
-    return `category:detail:${slug}:version`;
+  getCategoryListPaginatedKey(page: number, limit: number, version: number): string {
+    return `category:list:v${version}:page:${page}:limit:${limit}`;
   }
 
-  getCategoryDetailKey(slug: string, version: number): string {
-    return `category:detail:${slug}:v${version}`;
+  getCategoryDetailVersionKey(identifier: string): string {
+    return `category:detail:${identifier}:version`;
+  }
+
+  getCategoryDetailKey(identifier: string, version: number): string {
+    return `category:detail:${identifier}:v${version}`;
+  }
+
+  getCategoryChildrenKey(parentId: string, version: number): string {
+    return `category:list:v${version}:children:${parentId}`;
+  }
+
+  getCategoryChildrenPaginatedKey(parentId: string, page: number, limit: number, version: number): string {
+    return `category:list:v${version}:children:${parentId}:page:${page}:limit:${limit}`;
+  }
+
+  getCategoryRootsKey(version: number): string {
+    return `category:list:v${version}:roots`;
+  }
+
+  getCategoryRootsPaginatedKey(page: number, limit: number, version: number): string {
+    return `category:list:v${version}:roots:page:${page}:limit:${limit}`;
   }
 
   // --- Banner Keys ---
@@ -59,8 +99,8 @@ export class CacheKeyFactory {
     return `policy:list:version`;
   }
 
-  getPolicyListKey(version: number): string {
-    return `policy:list:v${version}`;
+  getPolicyListKey(version: number, type: string = 'all'): string {
+    return `policy:list:v${version}:type:${type}`;
   }
 
   getPolicyDetailVersionKey(slug: string): string {

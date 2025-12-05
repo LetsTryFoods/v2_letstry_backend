@@ -6,6 +6,7 @@ import { Product, ProductSchema } from '../product/product.schema';
 import { Category, CategorySchema } from '../category/category.schema';
 import { Banner, BannerSchema } from '../banner/banner.schema';
 import { Admin, AdminSchema } from '../admin/admin.schema';
+import { User, UserSchema } from '../user/user.schema';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { Admin, AdminSchema } from '../admin/admin.schema';
       { name: Category.name, schema: CategorySchema },
       { name: Banner.name, schema: BannerSchema },
       { name: Admin.name, schema: AdminSchema },
+      { name: User.name, schema: UserSchema },
     ]),
   ],
   providers: [DashboardService, DashboardResolver],

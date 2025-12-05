@@ -54,6 +54,25 @@ export class WinstonLoggerService implements LoggerService {
             winston.format.json(),
           ),
         }),
+        ...['product', 'category', 'banner', 'policy'].map((module) => 
+          new winston.transports.File({
+            filename: path.resolve(`logs/redis-${module}.log`),
+            level: 'info',
+            format: winston.format.combine(
+              winston.format((info) => {
+                const key = info.key || (info.message && typeof info.message === 'object' && (info.message as any)['key']);
+                
+                if (info.context === 'Redis' && typeof key === 'string' && key.startsWith(`${module}:`)) {
+                  return info;
+                }
+                return false;
+              })(),
+              winston.format.timestamp(),
+              winston.format.errors({ stack: true }),
+              winston.format.json(),
+            ),
+          })
+        ),
         new winston.transports.Console({
           format: winston.format.combine(
             winston.format.colorize(),

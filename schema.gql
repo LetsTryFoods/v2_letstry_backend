@@ -41,6 +41,7 @@ type DashboardStats {
   totalCategories: Float!
   activeBanners: Float!
   totalAdmins: Float!
+  totalUsers: Float!
 }
 
 type Policy {

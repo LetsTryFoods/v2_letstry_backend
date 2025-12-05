@@ -13,283 +13,609 @@ import { CacheService } from '../cache/cache.service';
 import { CacheKeyFactory } from '../cache/cache-key.factory';
 import { CacheInvalidatorService } from '../cache/cache-invalidator.service';
 
+// ============================================================================
+// 1. CONSTANTS & TYPES
+// ============================================================================
+export const CATEGORY_CACHE_TTL = 15552000000;
+export const DEFAULT_PAGE = 1;
+export const DEFAULT_LIMIT = 10;
+
+// ============================================================================
+// 2. QUERY FILTER BUILDER (Single Responsibility)
+// ============================================================================
+export class CategoryQueryBuilder {
+  private filter: any = {};
+
+  withArchived(includeArchived: boolean): this {
+    if (!includeArchived) {
+      this.filter.isArchived = false;
+    }
+    return this;
+  }
+
+  withId(id: string): this {
+    this.filter._id = id;
+    return this;
+  }
+
+  withSlug(slug: string): this {
+    this.filter.slug = slug;
+    return this;
+  }
+
+  withParentId(parentId: string | null): this {
+    this.filter.parentId = parentId;
+    return this;
+  }
+
+  excludeId(id: string): this {
+    this.filter._id = { $ne: id };
+    return this;
+  }
+
+  build(): any {
+    return this.filter;
+  }
+}
+
+// ============================================================================
+// 3. CACHE DECORATOR (Separation of Concerns)
+// ============================================================================
+export class CategoryCacheDecorator {
+  constructor(
+    private readonly cacheService: CacheService,
+    private readonly cacheKeyFactory: CacheKeyFactory,
+    private readonly ttl: number = CATEGORY_CACHE_TTL,
+  ) {}
+
+  async withCache<T>(
+    versionKey: string,
+    dataKey: (version: string) => string,
+    fetchData: () => Promise<T>,
+  ): Promise<T> {
+    const version = await this.cacheService.getVersion(versionKey);
+    const key = dataKey(version.toString());
+
+    const cached = await this.cacheService.get<T>(key);
+    if (cached) return cached;
+
+    const data = await fetchData();
+    if (data) {
+      await this.cacheService.set(key, data, this.ttl);
+    }
+    return data;
+  }
+
+  async withCacheOrNull<T>(
+    versionKey: string,
+    dataKey: (version: string) => string,
+    fetchData: () => Promise<T | null>,
+  ): Promise<T | null> {
+    const version = await this.cacheService.getVersion(versionKey);
+    const key = dataKey(version.toString());
+
+    const cached = await this.cacheService.get<T>(key);
+    if (cached) return cached;
+
+    const data = await fetchData();
+    if (data) {
+      await this.cacheService.set(key, data, this.ttl);
+    }
+    return data;
+  }
+}
+
+// ============================================================================
+// 4. PAGINATION HELPER (DRY Principle)
+// ============================================================================
+export class PaginationHelper {
+  static calculatePagination(page: number, limit: number, totalCount: number) {
+    const skip = (page - 1) * limit;
+    const totalPages = Math.ceil(totalCount / limit);
+    return {
+      skip,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    };
+  }
+
+  static createResult<T>(
+    items: T[],
+    page: number,
+    limit: number,
+    totalCount: number,
+  ): PaginationResult<T> {
+    const { totalPages, hasNextPage, hasPreviousPage } = 
+      this.calculatePagination(page, limit, totalCount);
+    
+    return {
+      items,
+      meta: {
+        totalCount,
+        page,
+        limit,
+        totalPages,
+        hasNextPage,
+        hasPreviousPage,
+      },
+    };
+  }
+}
+
+// ============================================================================
+// 5. CATEGORY REPOSITORY (Data Access Layer)
+// ============================================================================
+export class CategoryRepository {
+  constructor(
+    private readonly categoryModel: Model<CategoryDocument>,
+  ) {}
+
+  async countDocuments(filter: any): Promise<number> {
+    return this.categoryModel.countDocuments(filter).exec();
+  }
+
+  async find(filter: any): Promise<Category[]> {
+    return this.categoryModel.find(filter).exec();
+  }
+
+  async findOne(filter: any): Promise<Category | null> {
+    return this.categoryModel.findOne(filter).exec();
+  }
+
+  async findPaginated(
+    filter: any,
+    skip: number,
+    limit: number,
+  ): Promise<Category[]> {
+    return this.categoryModel
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+  }
+
+  async create(data: any): Promise<Category> {
+    const category = new this.categoryModel(data);
+    return category.save();
+  }
+
+  async findByIdAndUpdate(
+    id: string,
+    update: any,
+    options?: any,
+  ): Promise<Category | null> {
+    return this.categoryModel.findByIdAndUpdate(id, update, options).exec();
+  }
+
+  async findByIdAndDelete(id: string): Promise<Category | null> {
+    return this.categoryModel.findByIdAndDelete(id).exec();
+  }
+
+  async findById(id: string): Promise<Category | null> {
+    return this.categoryModel.findById(id).exec();
+  }
+
+  async updateOne(filter: any, update: any): Promise<void> {
+    await this.categoryModel.updateOne(filter, update).exec();
+  }
+}
+
+// ============================================================================
+// 6. CATEGORY QUERY SERVICE (Query Operations)
+// ============================================================================
+export class CategoryQueryService {
+  constructor(
+    private readonly repository: CategoryRepository,
+    private readonly cacheDecorator: CategoryCacheDecorator,
+    private readonly cacheKeyFactory: CacheKeyFactory,
+  ) {}
+
+  async findAll(includeArchived: boolean): Promise<Category[]> {
+    const filter = new CategoryQueryBuilder()
+      .withArchived(includeArchived)
+      .build();
+
+    if (!includeArchived) {
+      return this.cacheDecorator.withCache(
+        this.cacheKeyFactory.getCategoryListVersionKey(),
+        (version) => this.cacheKeyFactory.getCategoryListKey(parseInt(version)),
+        () => this.repository.find(filter),
+      );
+    }
+
+    return this.repository.find(filter);
+  }
+
+  async findOne(id: string, includeArchived: boolean): Promise<Category | null> {
+    const filter = new CategoryQueryBuilder()
+      .withId(id)
+      .withArchived(includeArchived)
+      .build();
+
+    if (!includeArchived) {
+      return this.cacheDecorator.withCacheOrNull(
+        this.cacheKeyFactory.getCategoryDetailVersionKey(id),
+        (version) => this.cacheKeyFactory.getCategoryDetailKey(id, parseInt(version)),
+        () => this.repository.findOne(filter),
+      );
+    }
+
+    return this.repository.findOne(filter);
+  }
+
+  async findBySlug(slug: string, includeArchived: boolean): Promise<Category | null> {
+    const filter = new CategoryQueryBuilder()
+      .withSlug(slug)
+      .withArchived(includeArchived)
+      .build();
+
+    if (!includeArchived) {
+      return this.cacheDecorator.withCacheOrNull(
+        this.cacheKeyFactory.getCategoryDetailVersionKey(slug),
+        (version) => this.cacheKeyFactory.getCategoryDetailKey(slug, parseInt(version)),
+        () => this.repository.findOne(filter),
+      );
+    }
+
+    return this.repository.findOne(filter);
+  }
+
+  async findChildren(parentId: string, includeArchived: boolean): Promise<Category[]> {
+    const filter = new CategoryQueryBuilder()
+      .withParentId(parentId)
+      .withArchived(includeArchived)
+      .build();
+
+    if (!includeArchived) {
+      return this.cacheDecorator.withCache(
+        this.cacheKeyFactory.getCategoryListVersionKey(),
+        (version) => this.cacheKeyFactory.getCategoryChildrenKey(parentId, parseInt(version)),
+        () => this.repository.find(filter),
+      );
+    }
+
+    return this.repository.find(filter);
+  }
+
+  async findRootCategories(includeArchived: boolean): Promise<Category[]> {
+    const filter = new CategoryQueryBuilder()
+      .withParentId(null)
+      .withArchived(includeArchived)
+      .build();
+
+    if (!includeArchived) {
+      return this.cacheDecorator.withCache(
+        this.cacheKeyFactory.getCategoryListVersionKey(),
+        (version) => this.cacheKeyFactory.getCategoryRootsKey(parseInt(version)),
+        () => this.repository.find(filter),
+      );
+    }
+
+    return this.repository.find(filter);
+  }
+
+  async findAllPaginated(
+    page: number,
+    limit: number,
+    includeArchived: boolean,
+  ): Promise<PaginationResult<Category>> {
+    const filter = new CategoryQueryBuilder()
+      .withArchived(includeArchived)
+      .build();
+
+    return this.executePaginatedQuery(
+      filter,
+      page,
+      limit,
+      includeArchived,
+      this.cacheKeyFactory.getCategoryListVersionKey(),
+      (version) => this.cacheKeyFactory.getCategoryListPaginatedKey(page, limit, parseInt(version)),
+    );
+  }
+
+  async findChildrenPaginated(
+    parentId: string,
+    page: number,
+    limit: number,
+    includeArchived: boolean,
+  ): Promise<PaginationResult<Category>> {
+    const filter = new CategoryQueryBuilder()
+      .withParentId(parentId)
+      .withArchived(includeArchived)
+      .build();
+
+    return this.executePaginatedQuery(
+      filter,
+      page,
+      limit,
+      includeArchived,
+      this.cacheKeyFactory.getCategoryListVersionKey(),
+      (version) => this.cacheKeyFactory.getCategoryChildrenPaginatedKey(parentId, page, limit, parseInt(version)),
+    );
+  }
+
+  async findRootCategoriesPaginated(
+    page: number,
+    limit: number,
+    includeArchived: boolean,
+  ): Promise<PaginationResult<Category>> {
+    const filter = new CategoryQueryBuilder()
+      .withParentId(null)
+      .withArchived(includeArchived)
+      .build();
+
+    return this.executePaginatedQuery(
+      filter,
+      page,
+      limit,
+      includeArchived,
+      this.cacheKeyFactory.getCategoryListVersionKey(),
+      (version) => this.cacheKeyFactory.getCategoryRootsPaginatedKey(page, limit, parseInt(version)),
+    );
+  }
+
+  private async executePaginatedQuery(
+    filter: any,
+    page: number,
+    limit: number,
+    includeArchived: boolean,
+    versionKey: string,
+    dataKeyFactory: (version: string) => string,
+  ): Promise<PaginationResult<Category>> {
+    if (!includeArchived) {
+      return this.cacheDecorator.withCache(
+        versionKey,
+        dataKeyFactory,
+        async () => {
+          const totalCount = await this.repository.countDocuments(filter);
+          const { skip } = PaginationHelper.calculatePagination(page, limit, totalCount);
+          const items = await this.repository.findPaginated(filter, skip, limit);
+          return PaginationHelper.createResult(items, page, limit, totalCount);
+        },
+      );
+    }
+
+    const totalCount = await this.repository.countDocuments(filter);
+    const { skip } = PaginationHelper.calculatePagination(page, limit, totalCount);
+    const items = await this.repository.findPaginated(filter, skip, limit);
+    return PaginationHelper.createResult(items, page, limit, totalCount);
+  }
+}
+
+// ============================================================================
+// 7. CATEGORY COMMAND SERVICE (Write Operations)
+// ============================================================================
+export class CategoryCommandService {
+  constructor(
+    private readonly repository: CategoryRepository,
+    private readonly slugService: SlugService,
+    private readonly cacheInvalidator: CacheInvalidatorService,
+  ) {}
+
+  async create(input: CreateCategoryInput): Promise<Category> {
+    const slug = await this.resolveSlug(input.name, input.slug);
+
+    const category = await this.repository.create({
+      ...input,
+      slug,
+      productCount: 0,
+      isArchived: input.isArchived ?? false,
+    });
+
+    await this.cacheInvalidator.invalidateCategory(category.slug);
+    return category;
+  }
+
+  async update(id: string, input: UpdateCategoryInput): Promise<Category> {
+    if (input.slug) {
+      await this.validateSlugUnique(input.slug, id);
+    }
+
+    const category = await this.repository.findByIdAndUpdate(
+      id,
+      input,
+      { new: true },
+    );
+
+    if (!category) {
+      throw new NotFoundException(`Category with id ${id} not found`);
+    }
+
+    await this.cacheInvalidator.invalidateCategory(category.slug);
+    return category;
+  }
+
+  async archive(id: string): Promise<Category> {
+    return this.updateArchiveStatus(id, true);
+  }
+
+  async unarchive(id: string): Promise<Category> {
+    return this.updateArchiveStatus(id, false);
+  }
+
+  async remove(id: string): Promise<Category> {
+    const category = await this.repository.findByIdAndDelete(id);
+    if (!category) {
+      throw new NotFoundException(`Category with id ${id} not found`);
+    }
+
+    await this.cacheInvalidator.invalidateCategory(category.slug);
+    return category;
+  }
+
+  async incrementProductCount(id: string): Promise<void> {
+    await this.updateProductCount(id, 1);
+  }
+
+  async decrementProductCount(id: string): Promise<void> {
+    await this.updateProductCount(id, -1);
+  }
+
+  private async resolveSlug(name: string, providedSlug?: string): Promise<string> {
+    if (!providedSlug) {
+      const baseSlug = this.slugService.generateSlug(name);
+      return this.slugService.generateUniqueSlug(
+        baseSlug,
+        (s) => this.checkSlugExists(s),
+      );
+    }
+
+    await this.validateSlugUnique(providedSlug);
+    return providedSlug;
+  }
+
+  private async validateSlugUnique(slug: string, excludeId?: string): Promise<void> {
+    if (await this.checkSlugExists(slug, excludeId)) {
+      throw new ConflictException(`Category with slug '${slug}' already exists`);
+    }
+  }
+
+  private async checkSlugExists(slug: string, excludeId?: string): Promise<boolean> {
+    const builder = new CategoryQueryBuilder().withSlug(slug);
+    if (excludeId) {
+      builder.excludeId(excludeId);
+    }
+    const count = await this.repository.countDocuments(builder.build());
+    return count > 0;
+  }
+
+  private async updateArchiveStatus(id: string, isArchived: boolean): Promise<Category> {
+    const category = await this.repository.findByIdAndUpdate(
+      id,
+      { isArchived },
+      { new: true },
+    );
+
+    if (!category) {
+      throw new NotFoundException(`Category with id ${id} not found`);
+    }
+
+    await this.cacheInvalidator.invalidateCategory(category.slug);
+    return category;
+  }
+
+  private async updateProductCount(id: string, increment: number): Promise<void> {
+    await this.repository.updateOne(
+      { _id: id },
+      { $inc: { productCount: increment } },
+    );
+
+    const category = await this.repository.findById(id);
+    if (category) {
+      await this.cacheInvalidator.invalidateCategory(category.slug);
+    }
+  }
+}
+
+// ============================================================================
+// 8. MAIN CATEGORY SERVICE (Facade Pattern)
+// ============================================================================
 @Injectable()
 export class CategoryService {
+  private readonly queryService: CategoryQueryService;
+  private readonly commandService: CategoryCommandService;
+
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
     private readonly slugService: SlugService,
     private readonly cacheService: CacheService,
     private readonly cacheKeyFactory: CacheKeyFactory,
     private readonly cacheInvalidatorService: CacheInvalidatorService,
-  ) {}
+  ) {
+    const repository = new CategoryRepository(categoryModel);
+    const cacheDecorator = new CategoryCacheDecorator(
+      cacheService,
+      cacheKeyFactory,
+      CATEGORY_CACHE_TTL,
+    );
 
-  async checkSlugExists(slug: string, excludeId?: string): Promise<boolean> {
-    const filter: any = { slug };
-    if (excludeId) {
-      filter._id = { $ne: excludeId };
-    }
-    const count = await this.categoryModel.countDocuments(filter).exec();
-    return count > 0;
+    this.queryService = new CategoryQueryService(
+      repository,
+      cacheDecorator,
+      cacheKeyFactory,
+    );
+
+    this.commandService = new CategoryCommandService(
+      repository,
+      slugService,
+      cacheInvalidatorService,
+    );
   }
 
+  // ========== WRITE OPERATIONS ==========
   async create(input: CreateCategoryInput): Promise<Category> {
-    let slug = input.slug;
-    if (!slug) {
-      slug = this.slugService.generateSlug(input.name);
-      slug = await this.slugService.generateUniqueSlug(slug, (s) =>
-        this.checkSlugExists(s),
-      );
-    } else {
-      if (await this.checkSlugExists(slug)) {
-        throw new ConflictException(
-          `Category with slug '${slug}' already exists`,
-        );
-      }
-    }
-
-    const category = new this.categoryModel({
-      ...input,
-      slug,
-      productCount: 0,
-      isArchived: input.isArchived ?? false,
-    });
-    const savedCategory = await category.save();
-    await this.cacheInvalidatorService.invalidateCategory(savedCategory.slug);
-    return savedCategory;
+    return this.commandService.create(input);
   }
 
+  async update(id: string, input: UpdateCategoryInput): Promise<Category> {
+    return this.commandService.update(id, input);
+  }
+
+  async archive(id: string): Promise<Category> {
+    return this.commandService.archive(id);
+  }
+
+  async unarchive(id: string): Promise<Category> {
+    return this.commandService.unarchive(id);
+  }
+
+  async remove(id: string): Promise<Category> {
+    return this.commandService.remove(id);
+  }
+
+  async incrementProductCount(id: string): Promise<void> {
+    return this.commandService.incrementProductCount(id);
+  }
+
+  async decrementProductCount(id: string): Promise<void> {
+    return this.commandService.decrementProductCount(id);
+  }
+
+  // ========== READ OPERATIONS ==========
   async findAll(includeArchived = false): Promise<Category[]> {
-    // Only cache non-archived (public) lists for now to keep it simple
-    if (!includeArchived) {
-      const versionKey = this.cacheKeyFactory.getCategoryListVersionKey();
-      const version = await this.cacheService.getVersion(versionKey);
-      const key = this.cacheKeyFactory.getCategoryListKey(version);
-
-      const cached = await this.cacheService.get<Category[]>(key);
-      if (cached) return cached;
-
-      const data = await this.categoryModel.find({ isArchived: false }).exec();
-      await this.cacheService.set(key, data);
-      return data;
-    }
-
-    const filter = includeArchived ? {} : { isArchived: false };
-    return this.categoryModel.find(filter).exec();
+    return this.queryService.findAll(includeArchived);
   }
 
   async findOne(id: string, includeArchived = false): Promise<Category | null> {
-    // Caching by ID is tricky if we primarily use slugs. 
-    // We'll skip caching ID lookups for now unless critical, 
-    // or we can map ID -> Slug -> Cache, but that's complex.
-    const filter = includeArchived
-      ? { _id: id }
-      : { _id: id, isArchived: false };
-    return this.categoryModel.findOne(filter).exec();
+    return this.queryService.findOne(id, includeArchived);
   }
 
-  async findBySlug(
-    slug: string,
-    includeArchived = false,
-  ): Promise<Category | null> {
-    if (!includeArchived) {
-      const versionKey = this.cacheKeyFactory.getCategoryDetailVersionKey(slug);
-      const version = await this.cacheService.getVersion(versionKey);
-      const key = this.cacheKeyFactory.getCategoryDetailKey(slug, version);
-
-      const cached = await this.cacheService.get<Category>(key);
-      if (cached) return cached;
-
-      const data = await this.categoryModel.findOne({ slug, isArchived: false }).exec();
-      if (data) {
-        await this.cacheService.set(key, data);
-      }
-      return data;
-    }
-
-    const filter = includeArchived ? { slug } : { slug, isArchived: false };
-    return this.categoryModel.findOne(filter).exec();
+  async findBySlug(slug: string, includeArchived = false): Promise<Category | null> {
+    return this.queryService.findBySlug(slug, includeArchived);
   }
 
-  async findChildren(
-    parentId: string,
-    includeArchived = false,
-  ): Promise<Category[]> {
-    // Caching children lists could be done with a specific key pattern like category:children:{parentId}
-    // For now, we'll leave this uncached or rely on the main list cache if the client filters there.
-    const filter = includeArchived
-      ? { parentId }
-      : { parentId, isArchived: false };
-    return this.categoryModel.find(filter).exec();
+  async findChildren(parentId: string, includeArchived = false): Promise<Category[]> {
+    return this.queryService.findChildren(parentId, includeArchived);
   }
 
   async findRootCategories(includeArchived = false): Promise<Category[]> {
-    const filter = includeArchived
-      ? { parentId: null }
-      : { parentId: null, isArchived: false };
-    return this.categoryModel.find(filter).exec();
+    return this.queryService.findRootCategories(includeArchived);
   }
 
   async findAllPaginated(
-    page: number = 1,
-    limit: number = 10,
+    page: number = DEFAULT_PAGE,
+    limit: number = DEFAULT_LIMIT,
     includeArchived = false,
   ): Promise<PaginationResult<Category>> {
-    const filter = includeArchived ? {} : { isArchived: false };
-
-    const skip = (page - 1) * limit;
-    const totalCount = await this.categoryModel.countDocuments(filter).exec();
-    const totalPages = Math.ceil(totalCount / limit);
-
-    const items = await this.categoryModel
-      .find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .exec();
-
-    return {
-      items,
-      meta: {
-        totalCount,
-        page,
-        limit,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1,
-      },
-    };
+    return this.queryService.findAllPaginated(page, limit, includeArchived);
   }
 
   async findChildrenPaginated(
     parentId: string,
-    page: number = 1,
-    limit: number = 10,
+    page: number = DEFAULT_PAGE,
+    limit: number = DEFAULT_LIMIT,
     includeArchived = false,
   ): Promise<PaginationResult<Category>> {
-    const filter = includeArchived
-      ? { parentId }
-      : { parentId, isArchived: false };
-
-    const skip = (page - 1) * limit;
-    const totalCount = await this.categoryModel.countDocuments(filter).exec();
-    const totalPages = Math.ceil(totalCount / limit);
-
-    const items = await this.categoryModel
-      .find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .exec();
-
-    return {
-      items,
-      meta: {
-        totalCount,
-        page,
-        limit,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1,
-      },
-    };
+    return this.queryService.findChildrenPaginated(parentId, page, limit, includeArchived);
   }
 
   async findRootCategoriesPaginated(
-    page: number = 1,
-    limit: number = 10,
+    page: number = DEFAULT_PAGE,
+    limit: number = DEFAULT_LIMIT,
     includeArchived = false,
   ): Promise<PaginationResult<Category>> {
-    const filter = includeArchived
-      ? { parentId: null }
-      : { parentId: null, isArchived: false };
-
-    const skip = (page - 1) * limit;
-    const totalCount = await this.categoryModel.countDocuments(filter).exec();
-    const totalPages = Math.ceil(totalCount / limit);
-
-    const items = await this.categoryModel
-      .find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .exec();
-
-    return {
-      items,
-      meta: {
-        totalCount,
-        page,
-        limit,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1,
-      },
-    };
-  }
-
-  async update(id: string, input: UpdateCategoryInput): Promise<Category> {
-    if (input.slug) {
-      if (await this.checkSlugExists(input.slug, id)) {
-        throw new ConflictException(
-          `Category with slug '${input.slug}' already exists`,
-        );
-      }
-    }
-
-    const category = await this.categoryModel
-      .findByIdAndUpdate(id, input, { new: true })
-      .exec();
-    if (!category) {
-      throw new NotFoundException(`Category with id ${id} not found`);
-    }
-    await this.cacheInvalidatorService.invalidateCategory(category.slug);
-    return category;
-  }
-
-  async archive(id: string): Promise<Category> {
-    const category = await this.categoryModel
-      .findByIdAndUpdate(id, { isArchived: true }, { new: true })
-      .exec();
-    if (!category) {
-      throw new NotFoundException(`Category with id ${id} not found`);
-    }
-    await this.cacheInvalidatorService.invalidateCategory(category.slug);
-    return category;
-  }
-
-  async unarchive(id: string): Promise<Category> {
-    const category = await this.categoryModel
-      .findByIdAndUpdate(id, { isArchived: false }, { new: true })
-      .exec();
-    if (!category) {
-      throw new NotFoundException(`Category with id ${id} not found`);
-    }
-    await this.cacheInvalidatorService.invalidateCategory(category.slug);
-    return category;
-  }
-
-  async remove(id: string): Promise<Category> {
-    const category = await this.categoryModel.findByIdAndDelete(id).exec();
-    if (!category) {
-      throw new NotFoundException(`Category with id ${id} not found`);
-    }
-    await this.cacheInvalidatorService.invalidateCategory(category.slug);
-    return category;
-  }
-
-  async incrementProductCount(id: string): Promise<void> {
-    await this.categoryModel
-      .updateOne({ _id: id }, { $inc: { productCount: 1 } })
-      .exec();
-    // Note: We might want to invalidate cache here too if product count is displayed in cached lists
-    // But frequent updates might thrash the cache. 
-    // For now, we'll assume product count updates don't need immediate cache invalidation 
-    // or we can invalidate the specific category detail if needed.
-  }
-
-  async decrementProductCount(id: string): Promise<void> {
-    await this.categoryModel
-      .updateOne({ _id: id }, { $inc: { productCount: -1 } })
-      .exec();
+    return this.queryService.findRootCategoriesPaginated(page, limit, includeArchived);
   }
 }

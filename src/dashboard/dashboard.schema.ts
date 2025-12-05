@@ -26,6 +26,9 @@ export class DashboardStats {
 
   @Field()
   totalAdmins: number;
+
+  @Field()
+  totalUsers: number;
 }
 
 @Schema()
