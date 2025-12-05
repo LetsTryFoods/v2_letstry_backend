@@ -128,6 +128,98 @@ type PaginatedCategories {
   meta: PaginationMeta!
 }
 
+type Guest {
+  _id: ID!
+  guest_id: String!
+  session_id: String!
+  created_at: DateTime!
+  last_active_at: DateTime!
+  ip_address: String
+  device_info: JSON
+  converted_to_user_id: ID
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+type CartItem {
+  product_id: ID!
+  sku: String!
+  name: String!
+  quantity: Int!
+  unit_price: Float!
+  total_price: Float!
+  image_url: String
+  attributes: JSON
+}
+
+type CartTotals {
+  subtotal: Float!
+  discount_amount: Float!
+  shipping_cost: Float!
+  estimated_tax: Float!
+  grand_total: Float!
+}
+
+type Cart {
+  _id: ID!
+  user_id: String
+  session_id: String
+  status: CartStatus!
+  coupon_code: String
+  shipping_method_id: String
+  expires_at: DateTime
+  totals_summary: CartTotals!
+  items: [CartItem!]!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+enum CartStatus {
+  ACTIVE
+  ORDERED
+  EXPIRED
+  MERGED
+}
+
+type Coupon {
+  _id: ID!
+  name: String!
+  description: String!
+  code: String!
+  discountType: DiscountType!
+  discountValue: Float!
+  minCartValue: Float
+  maxDiscountAmount: Float
+  startDate: DateTime!
+  endDate: DateTime!
+  isActive: Boolean!
+  eligibilityType: EligibilityType!
+  applicationScope: ApplicationScope!
+  usageLimit: Int
+  usageCount: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum EligibilityType {
+  MINIMUM_VALUE
+  NO_MINIMUM
+}
+
+enum ApplicationScope {
+  ON_TOTAL_AMOUNT
+  ON_PRODUCT_MRP
+  ON_SUBTOTAL
+}
+
 type Query {
   hello: String!
   products(pagination: PaginationInput! = {page: 1, limit: 10}, includeOutOfStock: Boolean! = false): PaginatedProducts!
@@ -147,6 +239,10 @@ type Query {
   policies: [Policy!]!
   policiesByType(type: String!): [Policy!]!
   policy(id: ID!): Policy
+  guest(id: ID!): Guest
+  guestByGuestId(guestId: String!): Guest
+  myCart: Cart
+  coupon(code: String!): Coupon!
 }
 
 input PaginationInput {
@@ -173,6 +269,14 @@ type Mutation {
   createPolicy(input: CreatePolicyInput!): Policy!
   updatePolicy(id: ID!, input: UpdatePolicyInput!): Policy!
   deletePolicy(id: ID!): Policy!
+  createGuest(input: CreateGuestInput!): Guest!
+  addToCart(input: AddToCartInput!): Cart!
+  updateCartItem(input: UpdateCartItemInput!): Cart!
+  removeFromCart(productId: ID!): Cart!
+  clearCart: Cart!
+  applyCoupon(code: String!): Cart!
+  removeCoupon: Cart!
+  createCoupon(input: CreateCouponInput!): Coupon!
   sendOtp(phoneNumber: String!): String!
   verifyOtpAndLogin(idToken: String!, input: CreateUserInput): String!
 }
@@ -322,6 +426,38 @@ input UpdatePolicyInput {
   type: String
 }
 
+input CreateGuestInput {
+  ip_address: String
+  device_info: JSON
+}
+
+input AddToCartInput {
+  productId: ID!
+  quantity: Int!
+  attributes: JSON
+}
+
+input UpdateCartItemInput {
+  productId: ID!
+  quantity: Int!
+}
+
+input CreateCouponInput {
+  name: String!
+  description: String!
+  code: String!
+  discountType: DiscountType!
+  discountValue: Float!
+  minCartValue: Float
+  maxDiscountAmount: Float
+  startDate: DateTime!
+  endDate: DateTime!
+  isActive: Boolean
+  eligibilityType: EligibilityType
+  applicationScope: ApplicationScope
+  usageLimit: Int
+}
+
 input CreateUserInput {
   phoneNumber: String!
   firebaseUid: String!
@@ -332,8 +468,3 @@ input CreateUserInput {
   signup_source: JSON
   last_ip: String
 }
-
-"""
-The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
-"""
-scalar JSON

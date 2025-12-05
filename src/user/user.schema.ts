@@ -59,6 +59,14 @@ export class User {
   @Prop({ required: true, type: String, enum: Object.values(Role), default: Role.USER })
   @Field(() => String)
   role: Role;
+
+  @Prop({ default: false })
+  @Field(() => Boolean)
+  isPhoneVerified: boolean;
+
+  @Prop({ type: [String], default: [] })
+  @Field(() => [String])
+  merged_guest_ids: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -16,6 +16,9 @@ import { CoreModule } from './core/core.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { IdentityModule } from './identity/identity.module';
 import { CaslModule } from './casl/casl.module';
+import { GuestModule } from './guest/guest.module';
+import { CartModule } from './cart/cart.module';
+import { CouponModule } from './coupon/coupon.module';
 
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
@@ -35,6 +38,9 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
     DashboardModule,
     PolicyModule,
     CaslModule,
+    GuestModule,
+    CartModule,
+    CouponModule,
     UserAuthModule,
     AuthModule,
     AppCacheModule,

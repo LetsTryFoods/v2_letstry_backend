@@ -43,6 +43,30 @@ export class WinstonLoggerService implements LoggerService {
           ),
         }),
         new winston.transports.File({
+          filename: path.resolve('logs/cart.log'),
+          level: 'info',
+          format: winston.format.combine(
+            winston.format((info) => {
+              return info.context === 'CartModule' ? info : false;
+            })(),
+            winston.format.timestamp(),
+            winston.format.errors({ stack: true }),
+            winston.format.json(),
+          ),
+        }),
+        new winston.transports.File({
+          filename: path.resolve('logs/guest.log'),
+          level: 'info',
+          format: winston.format.combine(
+            winston.format((info) => {
+              return info.context === 'GuestModule' ? info : false;
+            })(),
+            winston.format.timestamp(),
+            winston.format.errors({ stack: true }),
+            winston.format.json(),
+          ),
+        }),
+        new winston.transports.File({
           filename: path.resolve(logConfig.redisFile),
           level: 'info', 
           format: winston.format.combine(

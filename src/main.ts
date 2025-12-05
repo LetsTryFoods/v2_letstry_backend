@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { WinstonLoggerService } from './logger/logger.service';
 import { ConfigService } from '@nestjs/config';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import cookieParser from 'cookie-parser';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
@@ -21,6 +23,7 @@ async function bootstrap() {
   });
 
   app.useGlobalFilters(new GlobalExceptionFilter());
+  app.use(cookieParser());
 
   const configService = app.get(ConfigService);
   console.log("Server get started")
