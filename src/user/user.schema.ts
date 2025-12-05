@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { ObjectType, Field, ID, GraphQLISODateTime } from '@nestjs/graphql';
 import { Role } from '../common/enums/role.enum';
+import GraphQLJSON from 'graphql-type-json';
 
 export type UserDocument = User & Document;
 
@@ -15,11 +16,11 @@ export class User {
   @Field()
   phoneNumber: string;
 
-  @Prop({ required: true })
+  @Prop()
   @Field()
   first_name: string;
 
-  @Prop({ required: true })
+  @Prop()
   @Field()
   last_name: string;
 
@@ -47,9 +48,9 @@ export class User {
   @Field(() => Boolean, { nullable: true })
   marketing_sms_opt_in?: boolean;
 
-  @Prop()
-  @Field({ nullable: true })
-  signup_source?: string;
+  @Prop({ type: Object })
+  @Field(() => GraphQLJSON, { nullable: true })
+  signup_source?: any;
 
   @Prop()
   @Field({nullable: true})

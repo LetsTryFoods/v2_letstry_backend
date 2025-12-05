@@ -325,10 +325,15 @@ input UpdatePolicyInput {
 input CreateUserInput {
   phoneNumber: String!
   firebaseUid: String!
-  first_name: String!
-  last_name: String!
+  first_name: String
+  last_name: String
   email: String
   marketing_sms_opt_in: Boolean
-  signup_source: String
+  signup_source: JSON
   last_ip: String
 }
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON

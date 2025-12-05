@@ -17,8 +17,16 @@ import { CatalogModule } from './catalog/catalog.module';
 import { IdentityModule } from './identity/identity.module';
 import { CaslModule } from './casl/casl.module';
 
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
     CoreModule,
     CatalogModule,
     IdentityModule,
@@ -42,6 +50,10 @@ import { CaslModule } from './casl/casl.module';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })

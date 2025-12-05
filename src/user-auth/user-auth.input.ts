@@ -1,4 +1,5 @@
 import { InputType, Field } from '@nestjs/graphql';
+import GraphQLJSON from 'graphql-type-json';
 
 @InputType()
 export class CreateUserInput {
@@ -8,11 +9,11 @@ export class CreateUserInput {
   @Field()
   firebaseUid: string;
 
-  @Field()
-  first_name: string;
+  @Field({ nullable: true })
+  first_name?: string;
 
-  @Field()
-  last_name: string;
+  @Field({ nullable: true })
+  last_name?: string;
 
   @Field({ nullable: true })
   email?: string;
@@ -20,8 +21,8 @@ export class CreateUserInput {
   @Field({ nullable: true })
   marketing_sms_opt_in?: boolean;
 
-  @Field({ nullable: true })
-  signup_source?: string;
+  @Field(() => GraphQLJSON, { nullable: true })
+  signup_source?: any;
 
   @Field({ nullable: true })
   last_ip?: string;

@@ -6,11 +6,11 @@ import { Role } from '../common/enums/role.enum';
 
 export interface CreateUserData {
   phoneNumber: string;
-  first_name: string;
-  last_name: string;
+  first_name?: string;
+  last_name?: string;
   email?: string;
   marketing_sms_opt_in?: boolean;
-  signup_source?: string;
+  signup_source?: any;
   last_ip?: string;
   role?: Role;
 }
