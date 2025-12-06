@@ -37,15 +37,15 @@ export class GuestResolver {
     
     if (context.res) {
       context.res.cookie('guest_session', {
-        guest_id: guest.guest_id,
-        session_id: guest.session_id,
+        guestId: guest.guestId,
+        sessionId: guest.sessionId,
       }, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 360 * 24 * 60 * 60 * 1000,
         sameSite: 'lax',
       });
-      this.logger.log('Resolver: guest_session cookie set', { guestId: guest.guest_id }, 'GuestModule');
+      this.logger.log('Resolver: guest_session cookie set', { guestId: guest.guestId }, 'GuestModule');
     }
 
     return guest;

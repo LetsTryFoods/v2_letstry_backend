@@ -7,6 +7,7 @@ import { WinstonLoggerService } from '../logger/logger.service';
 import { AddToCartInput, UpdateCartItemInput } from './cart.input';
 import { CouponService } from '../coupon/coupon.service';
 import { DiscountType, ApplicationScope } from '../coupon/coupon.schema';
+import { ChargesService } from '../charges/charges.service';
 
 @Injectable()
 export class CartService {
@@ -15,11 +16,14 @@ export class CartService {
     private readonly productService: ProductService,
     private readonly logger: WinstonLoggerService,
     private readonly couponService: CouponService,
+    private readonly chargesService: ChargesService,
   ) {}
 
+ 
+
   private getCartFilter(userId?: string, sessionId?: string) {
-    if (userId) return { user_id: userId, status: CartStatus.ACTIVE };
-    if (sessionId) return { session_id: sessionId, status: CartStatus.ACTIVE };
+    if (userId) return { userId: userId, status: CartStatus.ACTIVE };
+    if (sessionId) return { sessionId: sessionId, status: CartStatus.ACTIVE };
     return null;
   }
 
@@ -39,8 +43,8 @@ export class CartService {
     if (!cart) {
       this.logger.log('Cart not found, creating new one', { userId, sessionId }, 'CartModule');
       cart = new this.cartModel({
-        user_id: userId,
-        session_id: sessionId,
+        userId: userId,
+        sessionId: sessionId,
         status: CartStatus.ACTIVE,
         items: [],
       });
@@ -53,14 +57,14 @@ export class CartService {
     }
 
     const newItem: CartItem = {
-      product_id: product._id,
+      productId: product._id,
       sku: product.sku || 'N/A',
       name: product.name,
       quantity: input.quantity,
-      unit_price: product.price,
+      unitPrice: product.price,
       mrp: product.mrp,
-      total_price: product.price * input.quantity,
-      image_url: product.images?.[0]?.url,
+      totalPrice: product.price * input.quantity,
+      imageUrl: product.images?.[0]?.url,
       attributes: input.attributes,
     };
 
@@ -76,7 +80,7 @@ export class CartService {
     this.logger.log('Updating cart item', { userId, sessionId, input }, 'CartModule');
     const cart = await this.getCartOrThrow(userId, sessionId);
 
-    const itemIndex = cart.items.findIndex((item) => item.product_id.toString() === input.productId);
+    const itemIndex = cart.items.findIndex((item) => item.productId.toString() === input.productId);
     if (itemIndex === -1) {
       throw new NotFoundException('Item not found in cart');
     }
@@ -85,7 +89,7 @@ export class CartService {
       cart.items.splice(itemIndex, 1);
     } else {
       cart.items[itemIndex].quantity = input.quantity;
-      cart.items[itemIndex].total_price = cart.items[itemIndex].quantity * cart.items[itemIndex].unit_price;
+      cart.items[itemIndex].totalPrice = cart.items[itemIndex].quantity * cart.items[itemIndex].unitPrice;
     }
 
     await this.recalculateCart(cart);
@@ -96,7 +100,7 @@ export class CartService {
     this.logger.log('Removing from cart', { userId, sessionId, productId }, 'CartModule');
     const cart = await this.getCartOrThrow(userId, sessionId);
 
-    cart.items = cart.items.filter((item) => item.product_id.toString() !== productId);
+    cart.items = cart.items.filter((item) => item.productId.toString() !== productId);
     await this.recalculateCart(cart);
     return cart.save();
   }
@@ -111,8 +115,8 @@ export class CartService {
 
   async mergeCarts(userId: string, sessionId: string): Promise<void> {
     this.logger.log('Merging carts', { userId, sessionId }, 'CartModule');
-    const guestCart = await this.cartModel.findOne({ session_id: sessionId, status: CartStatus.ACTIVE });
-    const userCart = await this.cartModel.findOne({ user_id: userId, status: CartStatus.ACTIVE });
+    const guestCart = await this.cartModel.findOne({ sessionId: sessionId, status: CartStatus.ACTIVE });
+    const userCart = await this.cartModel.findOne({ userId: userId, status: CartStatus.ACTIVE });
 
     if (!guestCart) {
       this.logger.log('No guest cart to merge', { sessionId }, 'CartModule');
@@ -121,8 +125,8 @@ export class CartService {
 
     if (!userCart) {
       this.logger.log('No existing user cart, adopting guest cart', { userId, sessionId }, 'CartModule');
-      guestCart.user_id = userId;
-      guestCart.session_id = undefined;
+      guestCart.userId = userId;
+      guestCart.sessionId = undefined;
       await guestCart.save();
       return;
     }
@@ -146,12 +150,12 @@ export class CartService {
     const cart = await this.getCartOrThrow(userId, sessionId);
 
     try {
-      await this.couponService.validateCoupon(code, cart.totals_summary.subtotal);
+      await this.couponService.validateCoupon(code, cart.totalsSummary.subtotal);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
 
-    cart.coupon_code = code;
+    cart.couponCode = code;
     await this.recalculateCart(cart);
     return cart.save();
   }
@@ -160,35 +164,43 @@ export class CartService {
     this.logger.log('Removing coupon', { userId, sessionId }, 'CartModule');
     const cart = await this.getCartOrThrow(userId, sessionId);
 
-    cart.coupon_code = undefined;
+    cart.couponCode = undefined;
     await this.recalculateCart(cart);
     return cart.save();
   }
 
-  private async recalculateCart(cart: Cart) {
+ private async recalculateCart(cart: Cart) {
     const subtotal = this.calculateSubtotal(cart.items);
     let discountAmount = 0;
 
-    if (cart.coupon_code) {
+    if (cart.couponCode) {
       try {
-        discountAmount = await this.calculateDiscount(subtotal, cart.items, cart.coupon_code);
+        discountAmount = await this.calculateDiscount(subtotal, cart.items, cart.couponCode);
       } catch (error) {
-        this.logger.warn(`Coupon ${cart.coupon_code} became invalid: ${error.message}`, 'CartModule');
-        cart.coupon_code = undefined;
+        this.logger.warn(`Coupon ${cart.couponCode} became invalid: ${error.message}`, 'CartModule');
+        cart.couponCode = undefined;
         discountAmount = 0;
       }
     }
 
+    const charges = await this.chargesService.getCharges();
+    let handlingCharge = 0;
+
+    if (charges && charges.active) {
+      handlingCharge = charges.handlingCharge;
+    }
+
     const shippingCost = 0; 
     const estimatedTax = 0; 
-    const grandTotal = Math.max(0, subtotal + shippingCost + estimatedTax - discountAmount);
+    const grandTotal = Math.max(0, subtotal + shippingCost + estimatedTax + handlingCharge - discountAmount);
 
-    cart.totals_summary = {
+    cart.totalsSummary = {
       subtotal,
-      discount_amount: discountAmount,
-      shipping_cost: shippingCost,
-      estimated_tax: estimatedTax,
-      grand_total: grandTotal,
+      discountAmount: discountAmount,
+      shippingCost: shippingCost,
+      estimatedTax: estimatedTax,
+      handlingCharge: handlingCharge,
+      grandTotal: grandTotal,
     };
   }
 
@@ -202,22 +214,22 @@ export class CartService {
 
   private findCartItemIndex(items: CartItem[], productId: string, attributes: any): number {
     return items.findIndex(
-      (item) => item.product_id.toString() === productId && JSON.stringify(item.attributes) === JSON.stringify(attributes)
+      (item) => item.productId.toString() === productId && JSON.stringify(item.attributes) === JSON.stringify(attributes)
     );
   }
 
   private upsertCartItem(items: CartItem[], newItem: CartItem) {
-    const existingIndex = this.findCartItemIndex(items, newItem.product_id, newItem.attributes);
+    const existingIndex = this.findCartItemIndex(items, newItem.productId, newItem.attributes);
     if (existingIndex > -1) {
       items[existingIndex].quantity += newItem.quantity;
-      items[existingIndex].total_price = items[existingIndex].quantity * items[existingIndex].unit_price;
+      items[existingIndex].totalPrice = items[existingIndex].quantity * items[existingIndex].unitPrice;
     } else {
       items.push(newItem);
     }
   }
 
   private calculateSubtotal(items: CartItem[]): number {
-    return items.reduce((sum, item) => sum + item.total_price, 0);
+    return items.reduce((sum, item) => sum + item.totalPrice, 0);
   }
 
   private async calculateDiscount(subtotal: number, items: CartItem[], couponCode?: string): Promise<number> {

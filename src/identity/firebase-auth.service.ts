@@ -9,13 +9,13 @@ export class FirebaseAuthService {
 
   async createFirebaseAuth(userId: string, firebaseUid: string): Promise<FirebaseAuthDocument> {
     const firebaseAuth = new this.firebaseAuthModel({
-      user_id: userId,
-      firebase_uid: firebaseUid,
+      userId: userId,
+      firebaseUid: firebaseUid,
     });
     return await firebaseAuth.save();
   }
 
   async findByFirebaseUid(firebaseUid: string): Promise<FirebaseAuthDocument | null> {
-    return await this.firebaseAuthModel.findOne({ firebase_uid: firebaseUid });
+    return await this.firebaseAuthModel.findOne({ firebaseUid: firebaseUid });
   }
 }

@@ -21,7 +21,7 @@ registerEnumType(CartStatus, {
 export class CartItem {
   @Prop({ required: true })
   @Field(() => ID)
-  product_id: string;
+  productId: string;
 
   @Prop({ required: true })
   @Field()
@@ -37,11 +37,11 @@ export class CartItem {
 
   @Prop({ required: true })
   @Field(() => Float)
-  unit_price: number;
+  unitPrice: number;
 
   @Prop({ required: true })
   @Field(() => Float)
-  total_price: number;
+  totalPrice: number;
 
   @Prop({ required: true, default: 0 })
   @Field(() => Float)
@@ -49,7 +49,7 @@ export class CartItem {
 
   @Prop()
   @Field({ nullable: true })
-  image_url?: string;
+  imageUrl?: string;
 
   @Prop({ type: Object })
   @Field(() => GraphQLJSON, { nullable: true })
@@ -64,19 +64,22 @@ export class CartTotals {
   subtotal: number;
 
   @Field(() => Float)
-  discount_amount: number;
+  discountAmount: number;
 
   @Field(() => Float)
-  shipping_cost: number;
+  shippingCost: number;
 
   @Field(() => Float)
-  estimated_tax: number;
+  estimatedTax: number;
 
   @Field(() => Float)
-  grand_total: number;
+  handlingCharge: number;
+
+  @Field(() => Float)
+  grandTotal: number;
 }
 
-@Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
+@Schema({ timestamps: true })
 @ObjectType()
 export class Cart {
   @Field(() => ID)
@@ -84,11 +87,11 @@ export class Cart {
 
   @Prop({ index: true })
   @Field({ nullable: true })
-  user_id?: string;
+  userId?: string;
 
   @Prop({ index: true })
   @Field({ nullable: true })
-  session_id?: string;
+  sessionId?: string;
 
   @Prop({ required: true, enum: CartStatus, default: CartStatus.ACTIVE })
   @Field(() => CartStatus)
@@ -96,29 +99,29 @@ export class Cart {
 
   @Prop()
   @Field({ nullable: true })
-  coupon_code?: string;
+  couponCode?: string;
 
   @Prop()
   @Field({ nullable: true })
-  shipping_method_id?: string;
+  shippingMethodId?: string;
 
   @Prop({ type: Date })
   @Field({ nullable: true })
-  expires_at?: Date;
+  expiresAt?: Date;
 
-  @Prop({ type: Object, default: { subtotal: 0, discount_amount: 0, shipping_cost: 0, estimated_tax: 0, grand_total: 0 } })
+  @Prop({ type: Object, default: { subtotal: 0, discountAmount: 0, shippingCost: 0, estimatedTax: 0, handlingCharge: 0, grandTotal: 0 } })
   @Field(() => CartTotals)
-  totals_summary: CartTotals;
+  totalsSummary: CartTotals;
 
   @Prop({ type: [CartItemSchema], default: [] })
   @Field(() => [CartItem])
   items: CartItem[];
 
   @Field()
-  created_at: Date;
+  createdAt: Date;
 
   @Field()
-  updated_at: Date;
+  updatedAt: Date;
 }
 
 export const CartSchema = SchemaFactory.createForClass(Cart);

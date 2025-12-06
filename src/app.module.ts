@@ -19,17 +19,12 @@ import { CaslModule } from './casl/casl.module';
 import { GuestModule } from './guest/guest.module';
 import { CartModule } from './cart/cart.module';
 import { CouponModule } from './coupon/coupon.module';
+import { ChargesModule } from './charges/charges.module';
+import { AddressModule } from './address/address.module';
 
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 10,
-      },
-    ]),
     CoreModule,
     CatalogModule,
     IdentityModule,
@@ -41,6 +36,8 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
     GuestModule,
     CartModule,
     CouponModule,
+    ChargesModule,
+    AddressModule,
     UserAuthModule,
     AuthModule,
     AppCacheModule,
@@ -56,10 +53,6 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
     },
   ],
 })

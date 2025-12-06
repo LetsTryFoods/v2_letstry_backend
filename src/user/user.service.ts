@@ -6,12 +6,12 @@ import { Role } from '../common/enums/role.enum';
 
 export interface CreateUserData {
   phoneNumber: string;
-  first_name?: string;
-  last_name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
-  marketing_sms_opt_in?: boolean;
-  signup_source?: any;
-  last_ip?: string;
+  marketingSmsOptIn?: boolean;
+  signupSource?: any;
+  lastIp?: string;
   role?: Role;
 }
 
@@ -22,8 +22,8 @@ export class UserService {
   async createUser(data: CreateUserData): Promise<UserDocument> {
     const user = new this.userModel({
       ...data,
-      created_at: new Date(),
-      marketing_sms_opt_in: data.marketing_sms_opt_in ?? false,
+      createdAt: new Date(),
+      marketingSmsOptIn: data.marketingSmsOptIn ?? false,
       role: data.role || Role.USER,
     });
     return await user.save();

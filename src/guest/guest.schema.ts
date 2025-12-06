@@ -13,31 +13,31 @@ export class Guest {
 
   @Prop({ required: true, unique: true })
   @Field()
-  guest_id: string;
+  guestId: string;
 
   @Prop({ required: true, unique: true })
   @Field()
-  session_id: string;
+  sessionId: string;
 
   @Prop({ required: true, type: Date, default: Date.now })
   @Field(() => GraphQLISODateTime)
-  created_at: Date;
+  createdAt: Date;
 
   @Prop({ required: true, type: Date, default: Date.now })
   @Field(() => GraphQLISODateTime)
-  last_active_at: Date;
+  lastActiveAt: Date;
 
   @Prop()
   @Field({ nullable: true })
-  ip_address?: string;
+  ipAddress?: string;
 
   @Prop({ type: Object })
   @Field(() => GraphQLJSON, { nullable: true })
-  device_info?: any;
+  deviceInfo?: any;
 
   @Prop()
   @Field(() => ID, { nullable: true })
-  converted_to_user_id?: string;
+  convertedToUserId?: string;
 }
 
 export const GuestSchema = SchemaFactory.createForClass(Guest);

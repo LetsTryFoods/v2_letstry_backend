@@ -7,9 +7,9 @@ export class CreateGuestInput {
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  ip_address?: string;
+  ipAddress?: string;
 
   @Field(() => GraphQLJSON, { nullable: true })
   @IsOptional()
-  device_info?: any;
+  deviceInfo?: any;
 }

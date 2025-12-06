@@ -10,20 +10,20 @@ export class CreateUserInput {
   firebaseUid: string;
 
   @Field({ nullable: true })
-  first_name?: string;
+  firstName?: string;
 
   @Field({ nullable: true })
-  last_name?: string;
+  lastName?: string;
 
   @Field({ nullable: true })
   email?: string;
 
   @Field({ nullable: true })
-  marketing_sms_opt_in?: boolean;
+  marketingSmsOptIn?: boolean;
 
   @Field(() => GraphQLJSON, { nullable: true })
-  signup_source?: any;
+  signupSource?: any;
 
   @Field({ nullable: true })
-  last_ip?: string;
+  lastIp?: string;
 }

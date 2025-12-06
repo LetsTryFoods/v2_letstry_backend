@@ -130,13 +130,13 @@ type PaginatedCategories {
 
 type Guest {
   _id: ID!
-  guest_id: String!
-  session_id: String!
-  created_at: DateTime!
-  last_active_at: DateTime!
-  ip_address: String
-  device_info: JSON
-  converted_to_user_id: ID
+  guestId: String!
+  sessionId: String!
+  createdAt: DateTime!
+  lastActiveAt: DateTime!
+  ipAddress: String
+  deviceInfo: JSON
+  convertedToUserId: ID
 }
 
 """
@@ -145,36 +145,38 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://
 scalar JSON
 
 type CartItem {
-  product_id: ID!
+  productId: ID!
   sku: String!
   name: String!
   quantity: Int!
-  unit_price: Float!
-  total_price: Float!
-  image_url: String
+  unitPrice: Float!
+  totalPrice: Float!
+  mrp: Float!
+  imageUrl: String
   attributes: JSON
 }
 
 type CartTotals {
   subtotal: Float!
-  discount_amount: Float!
-  shipping_cost: Float!
-  estimated_tax: Float!
-  grand_total: Float!
+  discountAmount: Float!
+  shippingCost: Float!
+  estimatedTax: Float!
+  handlingCharge: Float!
+  grandTotal: Float!
 }
 
 type Cart {
   _id: ID!
-  user_id: String
-  session_id: String
+  userId: String
+  sessionId: String
   status: CartStatus!
-  coupon_code: String
-  shipping_method_id: String
-  expires_at: DateTime
-  totals_summary: CartTotals!
+  couponCode: String
+  shippingMethodId: String
+  expiresAt: DateTime
+  totalsSummary: CartTotals!
   items: [CartItem!]!
-  created_at: DateTime!
-  updated_at: DateTime!
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 enum CartStatus {
@@ -220,6 +222,22 @@ enum ApplicationScope {
   ON_SUBTOTAL
 }
 
+type Address {
+  _id: ID!
+  userId: ID!
+  name: String!
+  streetAddress: String!
+  extendedAddress: String
+  addressLocality: String!
+  addressRegion: String!
+  postalCode: String!
+  addressCountry: String!
+  telephone: String!
+  isDefault: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
 type Query {
   hello: String!
   products(pagination: PaginationInput! = {page: 1, limit: 10}, includeOutOfStock: Boolean! = false): PaginatedProducts!
@@ -243,6 +261,8 @@ type Query {
   guestByGuestId(guestId: String!): Guest
   myCart: Cart
   coupon(code: String!): Coupon!
+  myAddresses: [Address!]!
+  address(id: ID!): Address!
 }
 
 input PaginationInput {
@@ -277,6 +297,9 @@ type Mutation {
   applyCoupon(code: String!): Cart!
   removeCoupon: Cart!
   createCoupon(input: CreateCouponInput!): Coupon!
+  createAddress(input: CreateAddressInput!): Address!
+  updateAddress(id: ID!, input: UpdateAddressInput!): Address!
+  deleteAddress(id: ID!): Address!
   sendOtp(phoneNumber: String!): String!
   verifyOtpAndLogin(idToken: String!, input: CreateUserInput): String!
 }
@@ -427,8 +450,8 @@ input UpdatePolicyInput {
 }
 
 input CreateGuestInput {
-  ip_address: String
-  device_info: JSON
+  ipAddress: String
+  deviceInfo: JSON
 }
 
 input AddToCartInput {
@@ -458,13 +481,37 @@ input CreateCouponInput {
   usageLimit: Int
 }
 
+input CreateAddressInput {
+  name: String!
+  streetAddress: String!
+  extendedAddress: String
+  addressLocality: String!
+  addressRegion: String!
+  postalCode: String!
+  addressCountry: String!
+  telephone: String!
+  isDefault: Boolean
+}
+
+input UpdateAddressInput {
+  name: String
+  streetAddress: String
+  extendedAddress: String
+  addressLocality: String
+  addressRegion: String
+  postalCode: String
+  addressCountry: String
+  telephone: String
+  isDefault: Boolean
+}
+
 input CreateUserInput {
   phoneNumber: String!
   firebaseUid: String!
-  first_name: String
-  last_name: String
+  firstName: String
+  lastName: String
   email: String
-  marketing_sms_opt_in: Boolean
-  signup_source: JSON
-  last_ip: String
+  marketingSmsOptIn: Boolean
+  signupSource: JSON
+  lastIp: String
 }

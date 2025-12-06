@@ -3,9 +3,9 @@ import { UseGuards } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { Cart } from './cart.schema';
 import { AddToCartInput, UpdateCartItemInput } from './cart.input';
-import { Public } from '../common/decorators/public.decorator.js';
+import { Public } from '../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Resolver(() => Cart)
 export class CartResolver {
@@ -13,7 +13,7 @@ export class CartResolver {
 
   private getSessionId(context: any): string | undefined {
     const cookie = context.req?.cookies?.guest_session;
-    return cookie?.session_id;
+    return cookie?.sessionId;
   }
 
   @Query(() => Cart, { name: 'myCart', nullable: true })

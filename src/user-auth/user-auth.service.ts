@@ -47,7 +47,7 @@ export class UserAuthService {
     let firebaseAuth = await this.firebaseAuthService.findByFirebaseUid(firebaseUid);
 
     if (firebaseAuth) {
-      const user = await this.userService.findById(firebaseAuth.user_id);
+      const user = await this.userService.findById(firebaseAuth.userId);
       if (!user) {
         throw new Error('User record not found.');
       }

@@ -15,22 +15,22 @@ export class GuestService {
 
   async create(input: CreateGuestInput): Promise<Guest> {
     this.logger.log('Creating new guest', { input }, 'GuestModule');
-    const { guest_id, session_id } = this.generateIds();
+    const { guestId, sessionId } = this.generateIds();
     
     const createdGuest = new this.guestModel({
       ...input,
-      guest_id,
-      session_id,
+      guestId,
+      sessionId,
     });
     const savedGuest = await createdGuest.save();
-    this.logger.log('Guest created successfully', { guestId: savedGuest.guest_id, id: savedGuest._id }, 'GuestModule');
+    this.logger.log('Guest created successfully', { guestId: savedGuest.guestId, id: savedGuest._id }, 'GuestModule');
     return savedGuest;
   }
 
-  private generateIds(): { guest_id: string; session_id: string } {
+  private generateIds(): { guestId: string; sessionId: string } {
     return {
-      guest_id: uuidv4(),
-      session_id: uuidv4(),
+      guestId: uuidv4(),
+      sessionId: uuidv4(),
     };
   }
 
@@ -44,10 +44,10 @@ export class GuestService {
   }
 
   async findByGuestId(guestId: string): Promise<Guest | null> {
-    this.logger.log('Finding guest by guest_id', { guestId }, 'GuestModule');
-    const guest = await this.guestModel.findOne({ guest_id: guestId }).exec();
+    this.logger.log('Finding guest by guestId', { guestId }, 'GuestModule');
+    const guest = await this.guestModel.findOne({ guestId: guestId }).exec();
     if (!guest) {
-      this.logger.warn('Guest not found by guest_id', { guestId }, 'GuestModule');
+      this.logger.warn('Guest not found by guestId', { guestId }, 'GuestModule');
     }
     return guest;
   }
