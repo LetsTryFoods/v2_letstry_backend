@@ -9,12 +9,9 @@ import { FirebaseService } from '../src/firebase/firebase.service';
 
 import { mockFirebaseService } from './common/firebase.mock';
 
-import { CacheService } from '../src/cache/cache.service';
-
 describe('Product (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
-  let cacheService: CacheService;
   let adminToken: string;
   let userToken: string;
   let categoryId: string;
@@ -29,7 +26,6 @@ describe('Product (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     connection = moduleFixture.get<Connection>(getConnectionToken());
-    cacheService = moduleFixture.get<CacheService>(CacheService);
     await app.init();
 
     // 1. Setup Admin
@@ -79,12 +75,10 @@ describe('Product (e2e)', () => {
     }
     userToken = userSignupResponse.body.data.verifyOtpAndLogin;
 
-    // 3. Setup Category
     await connection.collection('categories').deleteMany({});
     try {
       await connection.collection('categories').dropIndex('id_1');
     } catch (error) {
-      // Ignore error if index doesn't exist
     }
     const category = await connection.collection('categories').insertOne({
       name: 'Snacks',
@@ -109,12 +103,6 @@ describe('Product (e2e)', () => {
     try {
       await connection.collection('products').dropIndex('id_1');
     } catch (e) {}
-    
-    // Invalidate product cache by bumping version
-    if (cacheService) {
-      await cacheService.bumpVersion('product:list:global:version');
-      await cacheService.bumpVersion(`product:list:category:${categoryId}:version`);
-    }
   });
 
   describe('Product Queries (Public)', () => {
