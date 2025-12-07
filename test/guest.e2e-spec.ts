@@ -5,15 +5,11 @@ import { AppModule } from '../src/app.module';
 import { Connection } from 'mongoose';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { FirebaseService } from '../src/firebase/firebase.service';
+import { mockFirebaseService } from './common/firebase.mock';
 
 describe('Guest (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
-
-  const mockFirebaseService = {
-    verifyIdToken: jest.fn(),
-    getUser: jest.fn(),
-  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({

@@ -7,17 +7,13 @@ import { getConnectionToken } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 
 import { FirebaseService } from '../src/firebase/firebase.service';
+import { mockFirebaseService } from './common/firebase.mock';
 
 describe('Dashboard (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
   let authToken: string;
   let userToken: string;
-
-  const mockFirebaseService = {
-    verifyIdToken: jest.fn().mockResolvedValue({ uid: 'S3XyJV3kNZRue5MFxrLF5stbWrK2' }),
-    getUser: jest.fn().mockResolvedValue({ uid: 'S3XyJV3kNZRue5MFxrLF5stbWrK2' }),
-  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -65,8 +61,8 @@ describe('Dashboard (e2e)', () => {
               idToken: "mock-firebase-token", 
               input: {
                 phoneNumber: "+918851951492",
-                first_name: "User",
-                last_name: "Unknown",
+                firstName: "User",
+                lastName: "Unknown",
                 firebaseUid: "S3XyJV3kNZRue5MFxrLF5stbWrK2"
               }
             )

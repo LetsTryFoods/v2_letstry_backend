@@ -222,6 +222,16 @@ enum ApplicationScope {
   ON_SUBTOTAL
 }
 
+type Charges {
+  _id: String!
+  active: Boolean!
+  handlingCharge: Float!
+  gstPercentage: Float!
+  freeDeliveryThreshold: Float!
+  deliveryDelhiBelowThreshold: Float!
+  deliveryRestBelowThreshold: Float!
+}
+
 type Address {
   _id: ID!
   userId: ID!
@@ -261,6 +271,7 @@ type Query {
   guestByGuestId(guestId: String!): Guest
   myCart: Cart
   coupon(code: String!): Coupon!
+  charges: Charges
   myAddresses: [Address!]!
   address(id: ID!): Address!
 }
@@ -297,6 +308,7 @@ type Mutation {
   applyCoupon(code: String!): Cart!
   removeCoupon: Cart!
   createCoupon(input: CreateCouponInput!): Coupon!
+  createOrUpdateCharges(input: CreateChargesInput!): Charges!
   createAddress(input: CreateAddressInput!): Address!
   updateAddress(id: ID!, input: UpdateAddressInput!): Address!
   deleteAddress(id: ID!): Address!
@@ -479,6 +491,15 @@ input CreateCouponInput {
   eligibilityType: EligibilityType
   applicationScope: ApplicationScope
   usageLimit: Int
+}
+
+input CreateChargesInput {
+  active: Boolean
+  handlingCharge: Float!
+  gstPercentage: Float!
+  freeDeliveryThreshold: Float!
+  deliveryDelhiBelowThreshold: Float!
+  deliveryRestBelowThreshold: Float!
 }
 
 input CreateAddressInput {

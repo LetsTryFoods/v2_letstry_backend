@@ -1,0 +1,325 @@
+
+> letstry@0.0.1 test:e2e
+> jest --config ./test/jest-e2e.json test/product.e2e-spec.ts
+
+  console.error
+    findAllPaginated Filter: {
+      "$and": [
+        {
+          "isArchived": false
+        },
+        {
+          "availabilityStatus": {
+            "$ne": "out_of_stock"
+          }
+        }
+      ]
+    }
+
+      493 |   ): Promise<PaginationResult<Product>> {
+      494 |     const filter = ProductQueryBuilder.forAll(includeOutOfStock, includeArchived);
+    > 495 |     console.error('findAllPaginated Filter:', JSON.stringify(filter, null, 2));
+          |             ^
+      496 |     const strategy = this.cacheStrategyFactory.createForGlobalList(
+      497 |       page,
+      498 |       limit,
+
+      at ProductQueryService.findAllPaginated (../src/product/product.service.ts:495:13)
+      at ProductService.findAllPaginated (../src/product/product.service.ts:736:30)
+      at ProductResolver.getProducts (../src/product/product.resolver.ts:40:46)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:67:33
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+  console.error
+    Cache MISS for key: product:list:global:v1:page:1:limit:10:sort:createdAt:desc:oos:false:archived:false
+
+      198 |       return cached;
+      199 |     }
+    > 200 |     console.error('Cache MISS for key:', key);
+          |             ^
+      201 |
+      202 |     const data = await fetchData();
+      203 |     if (data) {
+
+      at VersionedCacheStrategy.execute (../src/product/product.service.ts:200:13)
+      at ProductResolver.getProducts (../src/product/product.resolver.ts:40:20)
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+  console.error
+    ProductRepository.findPaginated filter: {"$and":[{"isArchived":false},{"availabilityStatus":{"$ne":"out_of_stock"}}]}
+
+      267 |     limit: number,
+      268 |   ): Promise<Product[]> {
+    > 269 |     console.error('ProductRepository.findPaginated filter:', JSON.stringify(filter));
+          |             ^
+      270 |     const result = await this.productModel
+      271 |       .find(filter)
+      272 |       .sort({ createdAt: -1 })
+
+      at ProductRepository.findPaginated (../src/product/product.service.ts:269:13)
+      at ../src/product/product.service.ts:414:25
+      at VersionedCacheStrategy.execute (../src/product/product.service.ts:202:24)
+      at ProductResolver.getProducts (../src/product/product.resolver.ts:40:20)
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+  console.error
+    ProductRepository.findPaginated result count: 0
+
+      274 |       .limit(limit)
+      275 |       .exec();
+    > 276 |     console.error('ProductRepository.findPaginated result count:', result.length);
+          |             ^
+      277 |     return result;
+      278 |   }
+      279 |
+
+      at ProductRepository.findPaginated (../src/product/product.service.ts:276:13)
+          at async Promise.all (index 1)
+      at ../src/product/product.service.ts:412:35
+      at VersionedCacheStrategy.execute (../src/product/product.service.ts:202:18)
+      at ProductResolver.getProducts (../src/product/product.resolver.ts:40:20)
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+  console.error
+    findAllPaginated Filter: {
+      "$and": [
+        {
+          "isArchived": false
+        },
+        {
+          "availabilityStatus": {
+            "$ne": "out_of_stock"
+          }
+        }
+      ]
+    }
+
+      493 |   ): Promise<PaginationResult<Product>> {
+      494 |     const filter = ProductQueryBuilder.forAll(includeOutOfStock, includeArchived);
+    > 495 |     console.error('findAllPaginated Filter:', JSON.stringify(filter, null, 2));
+          |             ^
+      496 |     const strategy = this.cacheStrategyFactory.createForGlobalList(
+      497 |       page,
+      498 |       limit,
+
+      at ProductQueryService.findAllPaginated (../src/product/product.service.ts:495:13)
+      at ProductService.findAllPaginated (../src/product/product.service.ts:736:30)
+      at ProductResolver.getProducts (../src/product/product.resolver.ts:40:46)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:67:33
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+  console.error
+    Cache HIT for key: product:list:global:v1:page:1:limit:10:sort:createdAt:desc:oos:false:archived:false
+
+      195 |     const cached = await this.cacheService.get<T>(key);
+      196 |     if (cached) {
+    > 197 |       console.error('Cache HIT for key:', key);
+          |               ^
+      198 |       return cached;
+      199 |     }
+      200 |     console.error('Cache MISS for key:', key);
+
+      at VersionedCacheStrategy.execute (../src/product/product.service.ts:197:15)
+      at ProductResolver.getProducts (../src/product/product.resolver.ts:40:20)
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+  console.error
+    Cache MISS for key: product:detail:693572bfc14bbec2f32bbc5d:v1
+
+      198 |       return cached;
+      199 |     }
+    > 200 |     console.error('Cache MISS for key:', key);
+          |             ^
+      201 |
+      202 |     const data = await fetchData();
+      203 |     if (data) {
+
+      at VersionedCacheStrategy.execute (../src/product/product.service.ts:200:13)
+      at QueryExecutor.executeFindOneOrThrow (../src/product/product.service.ts:397:20)
+      at ProductResolver.getProduct (../src/product/product.resolver.ts:57:14)
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+  console.error
+    Cache MISS for key: product:detail:slug-test:v1
+
+      198 |       return cached;
+      199 |     }
+    > 200 |     console.error('Cache MISS for key:', key);
+          |             ^
+      201 |
+      202 |     const data = await fetchData();
+      203 |     if (data) {
+
+      at VersionedCacheStrategy.execute (../src/product/product.service.ts:200:13)
+      at QueryExecutor.executeFindOneOrThrow (../src/product/product.service.ts:397:20)
+      at ProductResolver.getProductBySlug (../src/product/product.resolver.ts:67:14)
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+  console.error
+    Cache MISS for key: product:list:category:693572bfc14bbec2f32bbc51:v1:page:1:limit:10:sort:createdAt:desc:oos:false:archived:false
+
+      198 |       return cached;
+      199 |     }
+    > 200 |     console.error('Cache MISS for key:', key);
+          |             ^
+      201 |
+      202 |     const data = await fetchData();
+      203 |     if (data) {
+
+      at VersionedCacheStrategy.execute (../src/product/product.service.ts:200:13)
+      at ProductResolver.getProductsByCategory (../src/product/product.resolver.ts:83:20)
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+  console.error
+    ProductRepository.findPaginated filter: {"categoryId":"693572bfc14bbec2f32bbc51","$and":[{"isArchived":false},{"availabilityStatus":{"$ne":"out_of_stock"}}]}
+
+      267 |     limit: number,
+      268 |   ): Promise<Product[]> {
+    > 269 |     console.error('ProductRepository.findPaginated filter:', JSON.stringify(filter));
+          |             ^
+      270 |     const result = await this.productModel
+      271 |       .find(filter)
+      272 |       .sort({ createdAt: -1 })
+
+      at ProductRepository.findPaginated (../src/product/product.service.ts:269:13)
+      at ../src/product/product.service.ts:414:25
+      at VersionedCacheStrategy.execute (../src/product/product.service.ts:202:24)
+      at ProductResolver.getProductsByCategory (../src/product/product.resolver.ts:83:20)
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+  console.error
+    ProductRepository.findPaginated result count: 1
+
+      274 |       .limit(limit)
+      275 |       .exec();
+    > 276 |     console.error('ProductRepository.findPaginated result count:', result.length);
+          |             ^
+      277 |     return result;
+      278 |   }
+      279 |
+
+      at ProductRepository.findPaginated (../src/product/product.service.ts:276:13)
+          at async Promise.all (index 1)
+      at ../src/product/product.service.ts:412:35
+      at VersionedCacheStrategy.execute (../src/product/product.service.ts:202:18)
+      at ProductResolver.getProductsByCategory (../src/product/product.resolver.ts:83:20)
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+  console.error
+    ProductRepository.findPaginated filter: {"$or":[{"name":{}},{"description":{}},{"brand":{}},{"keywords":{}},{"tags":{}}],"$and":[{"isArchived":false},{"availabilityStatus":{"$ne":"out_of_stock"}}]}
+
+      267 |     limit: number,
+      268 |   ): Promise<Product[]> {
+    > 269 |     console.error('ProductRepository.findPaginated filter:', JSON.stringify(filter));
+          |             ^
+      270 |     const result = await this.productModel
+      271 |       .find(filter)
+      272 |       .sort({ createdAt: -1 })
+
+      at ProductRepository.findPaginated (../src/product/product.service.ts:269:13)
+      at ../src/product/product.service.ts:414:25
+      at NoCacheStrategy.execute (../src/product/product.service.ts:179:12)
+      at QueryExecutor.executePaginated (../src/product/product.service.ts:410:26)
+      at ProductQueryService.searchProductsPaginated (../src/product/product.service.ts:529:26)
+      at ProductService.searchProductsPaginated (../src/product/product.service.ts:764:30)
+      at ProductResolver.searchProducts (../src/product/product.resolver.ts:104:46)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:67:33
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+  console.error
+    ProductRepository.findPaginated result count: 1
+
+      274 |       .limit(limit)
+      275 |       .exec();
+    > 276 |     console.error('ProductRepository.findPaginated result count:', result.length);
+          |             ^
+      277 |     return result;
+      278 |   }
+      279 |
+
+      at ProductRepository.findPaginated (../src/product/product.service.ts:276:13)
+          at async Promise.all (index 1)
+      at ../src/product/product.service.ts:412:35
+      at ProductResolver.searchProducts (../src/product/product.resolver.ts:104:20)
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+  console.error
+    Cache MISS for key: product:detail:507f1f77bcf86cd799439011:v1
+
+      198 |       return cached;
+      199 |     }
+    > 200 |     console.error('Cache MISS for key:', key);
+          |             ^
+      201 |
+      202 |     const data = await fetchData();
+      203 |     if (data) {
+
+      at VersionedCacheStrategy.execute (../src/product/product.service.ts:200:13)
+      at QueryExecutor.executeFindOneOrThrow (../src/product/product.service.ts:397:20)
+      at ProductResolver.getProduct (../src/product/product.resolver.ts:57:14)
+      at target (../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-context-creator.js:74:28)
+      at ../node_modules/.pnpm/@nestjs+core@11.1.9_@nestjs+common@11.1.9_class-transformer@0.5.1_class-validator@0.14._35aa21069415c61cc2ff03470cea104c/node_modules/@nestjs/core/helpers/external-proxy.js:9:24
+
+2025-12-07T12:27:43.359Z [32minfo[39m: Product created: 693572bfc14bbec2f32bbc77 
+2025-12-07T12:27:43.372Z [32minfo[39m: Product updated: 693572bfc14bbec2f32bbc7e 
+FAIL test/product.e2e-spec.ts
+  Product (e2e)
+    Product Queries (Public)
+      ✓ should get empty products list (39 ms)
+      ✕ should get products with category field resolver (8 ms)
+      ✓ should get product by id (10 ms)
+      ✓ should get product by slug (8 ms)
+      ✓ should get products by category (14 ms)
+      ✓ should search products (9 ms)
+      ✓ should return null for non-existent product (8 ms)
+    Product Mutations (Admin Only)
+      ✓ should allow ADMIN to create a product (18 ms)
+      ✓ should allow ADMIN to update a product (11 ms)
+      ✓ should fail to create product with duplicate slug (14 ms)
+    Product Mutations (Forbidden for User)
+      ✓ should FORBID USER from creating a product (6 ms)
+      ✓ should FORBID USER from updating a product (7 ms)
+
+  ● Product (e2e) › Product Queries (Public) › should get products with category field resolver
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+      199 |         })
+      200 |         .expect(200)
+    > 201 |         .expect((res) => {
+          |          ^
+      202 |           expect(res.body.data.products.items).toHaveLength(1);
+      203 |           expect(res.body.data.products.items[0].category).toBeDefined();
+      204 |           expect(res.body.data.products.items[0].category.name).toBe('Snacks');
+
+      at Object.<anonymous> (product.e2e-spec.ts:201:10)
+      ----
+      at product.e2e-spec.ts:202:48
+      at ../node_modules/.pnpm/supertest@7.1.4/node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../node_modules/.pnpm/supertest@7.1.4/node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../node_modules/.pnpm/supertest@7.1.4/node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../node_modules/.pnpm/supertest@7.1.4/node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../node_modules/.pnpm/supertest@7.1.4/node_modules/supertest/lib/test.js:152:11)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 11 passed, 12 total
+Snapshots:   0 total
+Time:        2.087 s
+Ran all test suites matching test/product.e2e-spec.ts.

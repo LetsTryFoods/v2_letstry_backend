@@ -7,6 +7,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { CreateCouponInput } from './coupon.input';
+import { Public } from '../common/decorators/public.decorator';
 
 @Resolver(() => Coupon)
 export class CouponResolver {
@@ -20,6 +21,7 @@ export class CouponResolver {
   }
 
   @Query(() => Coupon, { name: 'coupon' })
+  @Public()
   async getCoupon(@Args('code') code: string): Promise<Coupon> {
     return this.couponService.getCouponByCode(code);
   }
