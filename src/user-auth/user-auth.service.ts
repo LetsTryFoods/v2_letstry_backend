@@ -6,6 +6,7 @@ import { FirebaseAuthService } from '../identity/firebase-auth.service';
 import { CreateUserInput } from './user-auth.input';
 import { Role } from '../common/enums/role.enum';
 import { UserDocument } from '../user/user.schema';
+import { CartService } from '../cart/cart.service';
 
 @Injectable()
 export class UserAuthService {
@@ -14,17 +15,23 @@ export class UserAuthService {
     private userService: UserService,
     private firebaseAuthService: FirebaseAuthService,
     private jwtService: JwtService,
+    private cartService: CartService,
   ) {}
 
   async sendOtp(phoneNumber: string): Promise<string> {
     return 'these api dont do anything {will be implement}';
   }
 
-  async verifyOtpAndLogin(idToken: string, input?: CreateUserInput): Promise<string> {
+  async verifyOtpAndLogin(idToken: string, input?: CreateUserInput, sessionId?: string): Promise<string> {
     try {
       const { firebaseUid, phoneNumber } = await this.decodeAndValidateToken(idToken);
       const user = await this.resolveUser(firebaseUid, phoneNumber, input);
       await this.ensureUserVerified(user);
+      
+      if (sessionId) {
+        await this.cartService.mergeCarts(user._id.toString(), sessionId);
+      }
+      
       return this.generateAuthToken(user, firebaseUid);
     } catch (error) {
       throw new Error(`Authentication failed: ${error.message}`);

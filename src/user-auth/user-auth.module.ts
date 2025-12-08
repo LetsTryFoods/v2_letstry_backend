@@ -6,12 +6,14 @@ import { UserModule } from '../user/user.module';
 import { UserAuthService } from './user-auth.service';
 import { UserAuthResolver } from './user-auth.resolver';
 import { IdentityModule } from '../identity/identity.module';
+import { CartModule } from '../cart/cart.module';
 
 @Module({
   imports: [
     FirebaseModule,
     UserModule,
     IdentityModule,
+    CartModule,
   ],
   providers: [UserAuthService, UserAuthResolver],
   exports: [UserAuthService],

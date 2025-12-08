@@ -7,17 +7,14 @@ import { getConnectionToken } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { FirebaseService } from '../src/firebase/firebase.service';
 
+import { mockFirebaseService } from './common/firebase.mock';
+
 describe('Product (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
   let adminToken: string;
   let userToken: string;
   let categoryId: string;
-
-  const mockFirebaseService = {
-    verifyIdToken: jest.fn().mockResolvedValue({ uid: 'S3XyJV3kNZRue5MFxrLF5stbWrK2' }),
-    getUser: jest.fn().mockResolvedValue({ uid: 'S3XyJV3kNZRue5MFxrLF5stbWrK2' }),
-  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -65,22 +62,23 @@ describe('Product (e2e)', () => {
               idToken: "mock-firebase-token", 
               input: {
                 phoneNumber: "+918851951492",
-                first_name: "User",
-                last_name: "Unknown",
+                firstName: "User",
+                lastName: "Unknown",
                 firebaseUid: "S3XyJV3kNZRue5MFxrLF5stbWrK2"
               }
             )
           }
         `,
       });
+    if (userSignupResponse.body.errors) {
+      console.error('Signup Errors:', JSON.stringify(userSignupResponse.body.errors, null, 2));
+    }
     userToken = userSignupResponse.body.data.verifyOtpAndLogin;
 
-    // 3. Setup Category
     await connection.collection('categories').deleteMany({});
     try {
       await connection.collection('categories').dropIndex('id_1');
     } catch (error) {
-      // Ignore error if index doesn't exist
     }
     const category = await connection.collection('categories').insertOne({
       name: 'Snacks',
@@ -118,8 +116,6 @@ describe('Product (e2e)', () => {
                 items {
                   _id
                   name
-                  slug
-                  price
                 }
               }
             }
@@ -256,6 +252,7 @@ describe('Product (e2e)', () => {
               }
             }
           `,
+
         })
         .expect(200)
         .expect((res) => {

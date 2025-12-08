@@ -6,17 +6,13 @@ import { Connection } from 'mongoose';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { FirebaseService } from '../src/firebase/firebase.service';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { mockFirebaseService } from './common/firebase.mock';
 
 describe('Address (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
   let userToken: string;
   let userId: string;
-
-  const mockFirebaseService = {
-    verifyIdToken: jest.fn().mockResolvedValue({ uid: 'test-firebase-uid', phone_number: '+919876543210' }),
-    getUser: jest.fn().mockResolvedValue({ uid: 'test-firebase-uid' }),
-  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -48,7 +44,7 @@ describe('Address (e2e)', () => {
                 phoneNumber: "+919876543210",
                 firstName: "Test",
                 lastName: "User",
-                firebaseUid: "test-firebase-uid"
+                firebaseUid: "S3XyJV3kNZRue5MFxrLF5stbWrK2"
               }
             )
           }

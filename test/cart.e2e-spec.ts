@@ -5,17 +5,13 @@ import { AppModule } from '../src/app.module';
 import { Connection } from 'mongoose';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { FirebaseService } from '../src/firebase/firebase.service';
+import { mockFirebaseService } from './common/firebase.mock';
 
 describe('Cart (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
   let userToken: string;
   let productId: string;
-
-  const mockFirebaseService = {
-    verifyIdToken: jest.fn().mockResolvedValue({ uid: 'test-firebase-uid', phone_number: '+919876543210' }),
-    getUser: jest.fn().mockResolvedValue({ uid: 'test-firebase-uid' }),
-  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -44,7 +40,7 @@ describe('Cart (e2e)', () => {
                 phoneNumber: "+919876543210",
                 firstName: "Test",
                 lastName: "User",
-                firebaseUid: "test-firebase-uid"
+                firebaseUid: "S3XyJV3kNZRue5MFxrLF5stbWrK2"
               }
             )
           }
@@ -90,8 +86,15 @@ describe('Cart (e2e)', () => {
   });
 
   describe('Cart Lifecycle', () => {
+    let agent: any;
+
+    beforeEach(() => {
+      // Create an agent that maintains cookies across requests
+      agent = request.agent(app.getHttpServer());
+    });
+
     it('should add item to cart', () => {
-      return request(app.getHttpServer())
+      return agent
         .post('/graphql')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
@@ -128,8 +131,8 @@ describe('Cart (e2e)', () => {
     });
 
     it('should update cart item', async () => {
-      // First add item
-      await request(app.getHttpServer())
+      // First add item using the agent
+      await agent
         .post('/graphql')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
@@ -140,7 +143,8 @@ describe('Cart (e2e)', () => {
           `,
         });
 
-      return request(app.getHttpServer())
+      // Then update using the same agent (cookies preserved)
+      return agent
         .post('/graphql')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
@@ -171,8 +175,8 @@ describe('Cart (e2e)', () => {
     });
 
     it('should remove item from cart', async () => {
-      // First add item
-      await request(app.getHttpServer())
+      // First add item using the agent
+      await agent
         .post('/graphql')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
@@ -183,7 +187,8 @@ describe('Cart (e2e)', () => {
           `,
         });
 
-      return request(app.getHttpServer())
+      // Then remove using the same agent (cookies preserved)
+      return agent
         .post('/graphql')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
@@ -209,8 +214,8 @@ describe('Cart (e2e)', () => {
     });
 
     it('should clear cart', async () => {
-      // First add item
-      await request(app.getHttpServer())
+      // First add item using the agent
+      await agent
         .post('/graphql')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
@@ -221,7 +226,8 @@ describe('Cart (e2e)', () => {
           `,
         });
 
-      return request(app.getHttpServer())
+      // Then clear using the same agent (cookies preserved)
+      return agent
         .post('/graphql')
         .set('Authorization', `Bearer ${userToken}`)
         .send({

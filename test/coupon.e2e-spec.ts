@@ -6,16 +6,12 @@ import { Connection } from 'mongoose';
 import { getConnectionToken } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { FirebaseService } from '../src/firebase/firebase.service';
+import { mockFirebaseService } from './common/firebase.mock';
 
 describe('Coupon (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
   let adminToken: string;
-
-  const mockFirebaseService = {
-    verifyIdToken: jest.fn(),
-    getUser: jest.fn(),
-  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -132,6 +128,7 @@ describe('Coupon (e2e)', () => {
         })
         .expect(200)
         .expect((res) => {
+          expect(res.body.data.coupon).not.toBeNull();
           expect(res.body.data.coupon.code).toBe('SUMMER50');
           expect(res.body.data.coupon.discountValue).toBe(50);
         });
