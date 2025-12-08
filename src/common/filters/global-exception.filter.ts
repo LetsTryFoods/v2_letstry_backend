@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { GqlArgumentsHost } from '@nestjs/graphql';
 import { Request, Response } from 'express';
 
 @Catch()
@@ -13,6 +14,42 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost) {
+    const contextType = host.getType<string>();
+
+    if (contextType === 'graphql') {
+      return this.handleGraphQLException(exception, host);
+    }
+
+    return this.handleHttpException(exception, host);
+  }
+
+  private handleGraphQLException(exception: unknown, host: ArgumentsHost) {
+    const gqlHost = GqlArgumentsHost.create(host);
+    const info = gqlHost.getInfo();
+
+    let message = 'Internal server error';
+
+    if (exception instanceof HttpException) {
+      const exceptionResponse = exception.getResponse() as any;
+      
+      if (typeof exceptionResponse === 'object') {
+        message = exceptionResponse.message || exception.message;
+      } else {
+        message = exceptionResponse;
+      }
+    } else if (exception instanceof Error) {
+      message = exception.message;
+    }
+
+    this.logger.error(
+      `GraphQL ${info?.fieldName || 'unknown'}`,
+      exception instanceof Error ? exception.stack : null,
+    );
+
+    throw exception;
+  }
+
+  private handleHttpException(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -35,7 +72,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       message = exception.message;
-      // In production, you might want to hide stack traces or internal error details
     }
 
     this.logger.error(

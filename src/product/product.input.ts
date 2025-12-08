@@ -21,6 +21,9 @@ export class CreateProductInput {
   description: string;
 
   @Field()
+  favourite: boolean;
+
+  @Field()
   categoryId: string;
 
   @Field()
@@ -118,6 +121,9 @@ export class UpdateProductInput {
 
   @Field({ nullable: true })
   description?: string;
+
+  @Field({ nullable: true })
+  favourite?: boolean;
 
   @Field({ nullable: true })
   categoryId?: string;

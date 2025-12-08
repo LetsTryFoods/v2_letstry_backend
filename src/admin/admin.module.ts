@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
 import { AdminService } from './admin.service';
 import { AdminResolver } from './admin.resolver';
 import { AuthService } from './auth/auth.service';

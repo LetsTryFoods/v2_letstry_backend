@@ -8,6 +8,9 @@ export class CreateCategoryInput {
   @Field({ nullable: true })
   slug?: string;
 
+  @Field()
+  favourite: boolean;
+
   @Field({ nullable: true })
   description?: string;
 
@@ -31,6 +34,9 @@ export class CreateCategoryInput {
 export class UpdateCategoryInput {
   @Field({ nullable: true })
   name?: string;
+
+  @Field({ nullable: true })
+  favourite?: boolean;
 
   @Field({ nullable: true })
   slug?: string;

@@ -30,6 +30,10 @@ export class Product {
   @Field()
   name: string;
 
+  @Prop({ required: true })
+  @Field()
+  favourite: boolean;
+
   @Prop({ required: true, unique: true })
   @Field()
   slug: string;

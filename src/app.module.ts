@@ -11,13 +11,14 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { AuthModule } from './auth/auth.module';
 import { UserAuthModule } from './user-auth/user-auth.module';
 import { RolesGuard } from './common/guards/roles.guard';
+import { GraphqlThrottlerGuard } from './common/guards/graphql-throttler.guard';
 import { AppCacheModule } from './cache/app-cache.module';
 import { CoreModule } from './core/core.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { IdentityModule } from './identity/identity.module';
 import { CaslModule } from './casl/casl.module';
 
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -53,7 +54,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
     },
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: GraphqlThrottlerGuard,
     },
   ],
 })

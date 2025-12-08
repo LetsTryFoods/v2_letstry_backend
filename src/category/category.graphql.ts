@@ -9,6 +9,9 @@ export class Category {
   name: string;
 
   @Field()
+  favourite: boolean;
+
+  @Field()
   slug: string;
 
   @Field({ nullable: true })

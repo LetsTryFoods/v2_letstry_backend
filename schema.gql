@@ -56,6 +56,7 @@ type Policy {
 type Product {
   _id: ID!
   name: String!
+  favourite: Boolean!
   slug: String!
   description: String!
   categoryId: String!
@@ -96,6 +97,7 @@ type Product {
 type Category {
   id: ID!
   name: String!
+  favourite: Boolean!
   slug: String!
   description: String
   parentId: String
@@ -181,6 +183,7 @@ input CreateProductInput {
   name: String!
   slug: String
   description: String!
+  favourite: Boolean!
   categoryId: String!
   brand: String!
   sku: String!
@@ -221,6 +224,7 @@ input UpdateProductInput {
   name: String
   slug: String
   description: String
+  favourite: Boolean
   categoryId: String
   brand: String
   sku: String
@@ -255,6 +259,7 @@ input UpdateProductInput {
 input CreateCategoryInput {
   name: String!
   slug: String
+  favourite: Boolean!
   description: String
   parentId: String
   imageUrl: String
@@ -265,6 +270,7 @@ input CreateCategoryInput {
 
 input UpdateCategoryInput {
   name: String
+  favourite: Boolean
   slug: String
   description: String
   parentId: String

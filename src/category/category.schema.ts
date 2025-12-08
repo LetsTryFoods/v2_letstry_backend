@@ -15,6 +15,9 @@ export class Category {
   @Prop({ required: true, unique: true })
   slug: string;
 
+  @Prop({ required: true })
+  favourite: boolean;
+
   @Prop()
   description: string;
 
