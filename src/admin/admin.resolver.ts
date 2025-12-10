@@ -38,11 +38,7 @@ export class AdminResolver {
     @Args('email') email: string,
     @Args('password') password: string,
   ): Promise<string> {
-    try {
-      const admin = await this.adminService.create({ email, password });
-      return `Admin created with email: ${admin.email}`;
-    } catch (error) {
-      throw new UnauthorizedException('Failed to create admin');
-    }
+    const admin = await this.adminService.create({ email, password });
+    return `Admin created with email: ${admin.email}`;
   }
 }

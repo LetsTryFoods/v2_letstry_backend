@@ -13,11 +13,11 @@ export class FirebaseAuth {
 
   @Prop({ type: Types.ObjectId, required: true, unique: true, ref: 'User' })
   @Field()
-  user_id: string;
+  userId: string;
 
   @Prop({ required: true, unique: true, maxlength: 128 })
   @Field()
-  firebase_uid: string;
+  firebaseUid: string;
 }
 
 export const FirebaseAuthSchema = SchemaFactory.createForClass(FirebaseAuth);

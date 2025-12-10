@@ -54,6 +54,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
+
+    if (!request || !response) {
+      this.logger.error(
+        'Exception in non-HTTP context',
+        exception instanceof Error ? exception.stack : String(exception),
+      );
+      throw exception;
+    }
+
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let code = 'INTERNAL_SERVER_ERROR';

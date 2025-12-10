@@ -53,6 +53,99 @@ type Policy {
   updatedAt: DateTime!
 }
 
+type CartItem {
+  productId: ID!
+  sku: String!
+  name: String!
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  mrp: Float!
+  imageUrl: String
+  attributes: JSON
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+type CartTotals {
+  subtotal: Float!
+  discountAmount: Float!
+  shippingCost: Float!
+  estimatedTax: Float!
+  handlingCharge: Float!
+  grandTotal: Float!
+}
+
+type Cart {
+  _id: ID!
+  userId: String
+  sessionId: String
+  status: CartStatus!
+  couponCode: String
+  shippingMethodId: String
+  expiresAt: DateTime
+  totalsSummary: CartTotals!
+  items: [CartItem!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum CartStatus {
+  ACTIVE
+  ORDERED
+  EXPIRED
+  MERGED
+}
+
+type Coupon {
+  _id: ID!
+  name: String!
+  description: String!
+  code: String!
+  discountType: DiscountType!
+  discountValue: Float!
+  minCartValue: Float
+  maxDiscountAmount: Float
+  startDate: DateTime!
+  endDate: DateTime!
+  isActive: Boolean!
+  eligibilityType: EligibilityType!
+  applicationScope: ApplicationScope!
+  usageLimit: Int
+  usageCount: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum EligibilityType {
+  MINIMUM_VALUE
+  NO_MINIMUM
+}
+
+enum ApplicationScope {
+  ON_TOTAL_AMOUNT
+  ON_PRODUCT_MRP
+  ON_SUBTOTAL
+}
+
+type Charges {
+  _id: String!
+  active: Boolean!
+  handlingCharge: Float!
+  gstPercentage: Float!
+  freeDeliveryThreshold: Float!
+  deliveryDelhiBelowThreshold: Float!
+  deliveryRestBelowThreshold: Float!
+}
+
 type Product {
   _id: ID!
   name: String!
@@ -130,6 +223,33 @@ type PaginatedCategories {
   meta: PaginationMeta!
 }
 
+type Guest {
+  _id: ID!
+  guestId: String!
+  sessionId: String!
+  createdAt: DateTime!
+  lastActiveAt: DateTime!
+  ipAddress: String
+  deviceInfo: JSON
+  convertedToUserId: ID
+}
+
+type Address {
+  _id: ID!
+  userId: ID!
+  name: String!
+  streetAddress: String!
+  extendedAddress: String
+  addressLocality: String!
+  addressRegion: String!
+  postalCode: String!
+  addressCountry: String!
+  telephone: String!
+  isDefault: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
 type Query {
   hello: String!
   products(pagination: PaginationInput! = {page: 1, limit: 10}, includeOutOfStock: Boolean! = false): PaginatedProducts!
@@ -149,6 +269,13 @@ type Query {
   policies: [Policy!]!
   policiesByType(type: String!): [Policy!]!
   policy(id: ID!): Policy
+  guest(id: ID!): Guest
+  guestByGuestId(guestId: String!): Guest
+  myCart: Cart
+  coupon(code: String!): Coupon!
+  charges: Charges
+  myAddresses: [Address!]!
+  address(id: ID!): Address!
 }
 
 input PaginationInput {
@@ -175,6 +302,18 @@ type Mutation {
   createPolicy(input: CreatePolicyInput!): Policy!
   updatePolicy(id: ID!, input: UpdatePolicyInput!): Policy!
   deletePolicy(id: ID!): Policy!
+  createGuest(input: CreateGuestInput!): Guest!
+  addToCart(input: AddToCartInput!): Cart!
+  updateCartItem(input: UpdateCartItemInput!): Cart!
+  removeFromCart(productId: ID!): Cart!
+  clearCart: Cart!
+  applyCoupon(code: String!): Cart!
+  removeCoupon: Cart!
+  createCoupon(input: CreateCouponInput!): Coupon!
+  createOrUpdateCharges(input: CreateChargesInput!): Charges!
+  createAddress(input: CreateAddressInput!): Address!
+  updateAddress(id: ID!, input: UpdateAddressInput!): Address!
+  deleteAddress(id: ID!): Address!
   sendOtp(phoneNumber: String!): String!
   verifyOtpAndLogin(idToken: String!, input: CreateUserInput): String!
 }
@@ -328,18 +467,78 @@ input UpdatePolicyInput {
   type: String
 }
 
+input CreateGuestInput {
+  ipAddress: String
+  deviceInfo: JSON
+}
+
+input AddToCartInput {
+  productId: ID!
+  quantity: Int!
+  attributes: JSON
+}
+
+input UpdateCartItemInput {
+  productId: ID!
+  quantity: Int!
+}
+
+input CreateCouponInput {
+  name: String!
+  description: String!
+  code: String!
+  discountType: DiscountType!
+  discountValue: Float!
+  minCartValue: Float
+  maxDiscountAmount: Float
+  startDate: DateTime!
+  endDate: DateTime!
+  isActive: Boolean
+  eligibilityType: EligibilityType
+  applicationScope: ApplicationScope
+  usageLimit: Int
+}
+
+input CreateChargesInput {
+  active: Boolean
+  handlingCharge: Float!
+  gstPercentage: Float!
+  freeDeliveryThreshold: Float!
+  deliveryDelhiBelowThreshold: Float!
+  deliveryRestBelowThreshold: Float!
+}
+
+input CreateAddressInput {
+  name: String!
+  streetAddress: String!
+  extendedAddress: String
+  addressLocality: String!
+  addressRegion: String!
+  postalCode: String!
+  addressCountry: String!
+  telephone: String!
+  isDefault: Boolean
+}
+
+input UpdateAddressInput {
+  name: String
+  streetAddress: String
+  extendedAddress: String
+  addressLocality: String
+  addressRegion: String
+  postalCode: String
+  addressCountry: String
+  telephone: String
+  isDefault: Boolean
+}
+
 input CreateUserInput {
   phoneNumber: String!
   firebaseUid: String!
-  first_name: String
-  last_name: String
+  firstName: String
+  lastName: String
   email: String
-  marketing_sms_opt_in: Boolean
-  signup_source: JSON
-  last_ip: String
+  marketingSmsOptIn: Boolean
+  signupSource: JSON
+  lastIp: String
 }
-
-"""
-The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
-"""
-scalar JSON

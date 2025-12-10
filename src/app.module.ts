@@ -11,23 +11,22 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { AuthModule } from './auth/auth.module';
 import { UserAuthModule } from './user-auth/user-auth.module';
 import { RolesGuard } from './common/guards/roles.guard';
-import { GraphqlThrottlerGuard } from './common/guards/graphql-throttler.guard';
+// import { GraphqlThrottlerGuard } from './common/guards/graphql-throttler.guard';
 import { AppCacheModule } from './cache/app-cache.module';
 import { CoreModule } from './core/core.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { IdentityModule } from './identity/identity.module';
 import { CaslModule } from './casl/casl.module';
+import { GuestModule } from './guest/guest.module';
+import { CartModule } from './cart/cart.module';
+import { CouponModule } from './coupon/coupon.module';
+import { ChargesModule } from './charges/charges.module';
+import { AddressModule } from './address/address.module';
 
 import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 10,
-      },
-    ]),
     CoreModule,
     CatalogModule,
     IdentityModule,
@@ -36,6 +35,11 @@ import { ThrottlerModule } from '@nestjs/throttler';
     DashboardModule,
     PolicyModule,
     CaslModule,
+    GuestModule,
+    CartModule,
+    CouponModule,
+    ChargesModule,
+    AddressModule,
     UserAuthModule,
     AuthModule,
     AppCacheModule,
@@ -52,10 +56,10 @@ import { ThrottlerModule } from '@nestjs/throttler';
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
-    {
-      provide: APP_GUARD,
-      useClass: GraphqlThrottlerGuard,
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   // useClass: GraphqlThrottlerGuard,
+    // },
   ],
 })
 export class AppModule {}

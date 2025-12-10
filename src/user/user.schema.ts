@@ -18,11 +18,11 @@ export class User {
 
   @Prop()
   @Field()
-  first_name: string;
+  firstName: string;
 
   @Prop()
   @Field()
-  last_name: string;
+  lastName: string;
 
   @Prop({ unique: true, sparse: true })
   @Field({ nullable: true })
@@ -30,35 +30,43 @@ export class User {
 
   @Prop({ required: true, type: Date })
   @Field(() => GraphQLISODateTime)
-  created_at: Date;
+  createdAt: Date;
 
   @Prop({ type: Date })
   @Field(() => GraphQLISODateTime)
-  updated_at: Date;
+  updatedAt: Date;
 
   @Prop({ type: Date })
   @Field(() => GraphQLISODateTime, { nullable: true })
-  last_login_at?: Date;
+  lastLoginAt?: Date;
 
   @Prop({ type: Number })
   @Field(() => Number, { nullable: true })
-  lifetime_value?: number;
+  lifetimeValue?: number;
 
   @Prop({ type: Boolean })
   @Field(() => Boolean, { nullable: true })
-  marketing_sms_opt_in?: boolean;
+  marketingSmsOptIn?: boolean;
 
   @Prop({ type: Object })
   @Field(() => GraphQLJSON, { nullable: true })
-  signup_source?: any;
+  signupSource?: any;
 
   @Prop()
   @Field({nullable: true})
-  last_ip: string;
+  lastIp: string;
 
   @Prop({ required: true, type: String, enum: Object.values(Role), default: Role.USER })
   @Field(() => String)
   role: Role;
+
+  @Prop({ default: false })
+  @Field(() => Boolean)
+  isPhoneVerified: boolean;
+
+  @Prop({ type: [String], default: [] })
+  @Field(() => [String])
+  mergedGuestIds: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
