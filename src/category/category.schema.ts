@@ -14,6 +14,9 @@ export class Category {
 
   @Prop({ required: true, unique: true })
   slug: string;
+  
+  @Prop({ type: Boolean, default: false, index: true })
+  favourite: boolean;
 
   @Prop()
   description: string;

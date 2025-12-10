@@ -28,11 +28,11 @@ export class User {
   @Field({ nullable: true })
   email?: string;
 
-  @Prop({ required: true, type: Date })
+  @Prop({ type: Date, default: Date.now })
   @Field(() => GraphQLISODateTime)
   createdAt: Date;
 
-  @Prop({ type: Date })
+  @Prop({ type: Date, default: Date.now })
   @Field(() => GraphQLISODateTime)
   updatedAt: Date;
 
@@ -56,7 +56,7 @@ export class User {
   @Field({nullable: true})
   lastIp: string;
 
-  @Prop({ required: true, type: String, enum: Object.values(Role), default: Role.USER })
+  @Prop({ type: String, enum: Object.values(Role), default: Role.USER })
   @Field(() => String)
   role: Role;
 

@@ -18,6 +18,9 @@ export class Category {
   parentId?: string;
 
   @Field({ nullable: true })
+  favourite?: boolean;
+
+  @Field({ nullable: true })
   imageUrl?: string;
 
   @Field()

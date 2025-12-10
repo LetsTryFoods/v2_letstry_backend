@@ -149,6 +149,7 @@ type Charges {
 type Product {
   _id: ID!
   name: String!
+  favourite: Boolean
   slug: String!
   description: String!
   categoryId: String!
@@ -192,6 +193,7 @@ type Category {
   slug: String!
   description: String
   parentId: String
+  favourite: Boolean
   imageUrl: String
   codeValue: String!
   inCodeSet: String!
@@ -319,6 +321,7 @@ type Mutation {
 input CreateProductInput {
   name: String!
   slug: String
+  favourite: Boolean
   description: String!
   categoryId: String!
   brand: String!
@@ -361,6 +364,7 @@ input UpdateProductInput {
   slug: String
   description: String
   categoryId: String
+  favourite: Boolean
   brand: String
   sku: String
   gtin: String
@@ -395,6 +399,7 @@ input CreateCategoryInput {
   name: String!
   slug: String
   description: String
+  favourite: Boolean
   parentId: String
   imageUrl: String
   codeValue: String!
@@ -406,6 +411,7 @@ input UpdateCategoryInput {
   name: String
   slug: String
   description: String
+  favourite: Boolean
   parentId: String
   imageUrl: String
   codeValue: String

@@ -22,9 +22,7 @@ export class UserService {
   async createUser(data: CreateUserData): Promise<UserDocument> {
     const user = new this.userModel({
       ...data,
-      createdAt: new Date(),
       marketingSmsOptIn: data.marketingSmsOptIn ?? false,
-      role: data.role || Role.USER,
     });
     return await user.save();
   }
