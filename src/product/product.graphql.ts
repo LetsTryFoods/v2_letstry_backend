@@ -1,5 +1,5 @@
-import { ObjectType, Field } from '@nestjs/graphql';
-import { Product as ProductSchema, ProductImage } from './product.schema';
+import { ObjectType, Field, Float } from '@nestjs/graphql';
+import { Product as ProductSchema, ProductImage, ProductVariant } from './product.schema';
 
 @ObjectType()
 export class Product extends ProductSchema {
@@ -9,4 +9,13 @@ export class Product extends ProductSchema {
   category?: any;
 }
 
-export { ProductImage };
+@ObjectType()
+export class PriceRange {
+  @Field(() => Float)
+  min: number;
+
+  @Field(() => Float)
+  max: number;
+}
+
+export { ProductImage, ProductVariant };

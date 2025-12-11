@@ -11,11 +11,11 @@ export class Guest {
   @Field(() => ID)
   _id: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, sparse: true })
   @Field()
   guestId: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, sparse: true })
   @Field()
   sessionId: string;
 

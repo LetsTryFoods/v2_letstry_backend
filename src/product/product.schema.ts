@@ -20,6 +20,66 @@ export class ProductImage {
   alt: string;
 }
 
+@ObjectType()
+export class ProductVariant {
+  @Field(() => ID)
+  _id: string;
+
+  @Field()
+  sku: string;
+
+  @Field()
+  name: string;
+
+  @Field(() => Float)
+  price: number;
+
+  @Field(() => Float)
+  mrp: number;
+
+  @Field(() => Float)
+  discountPercent: number;
+
+  @Field()
+  discountSource: string;
+
+  @Field(() => Float)
+  weight: number;
+
+  @Field()
+  weightUnit: string;
+
+  @Field()
+  packageSize: string;
+
+  @Field(() => Float)
+  length: number;
+
+  @Field(() => Float)
+  height: number;
+
+  @Field(() => Float)
+  breadth: number;
+
+  @Field(() => Int)
+  stockQuantity: number;
+
+  @Field()
+  availabilityStatus: string;
+
+  @Field(() => [ProductImage])
+  images: ProductImage[];
+
+  @Field()
+  thumbnailUrl: string;
+
+  @Field()
+  isDefault: boolean;
+
+  @Field()
+  isActive: boolean;
+}
+
 @Schema({ timestamps: true })
 @ObjectType()
 export class Product {
@@ -30,9 +90,9 @@ export class Product {
   @Field()
   name: string;
 
-  @Prop({ required: true })
-  @Field()
-  favourite: boolean;
+  @Prop({ nullable: true })
+  @Field({ nullable: true })
+  favourite?: boolean;
 
   @Prop({ required: true, unique: true })
   @Field()
@@ -50,10 +110,6 @@ export class Product {
   @Field()
   brand: string;
 
-  @Prop({ required: true })
-  @Field()
-  sku: string;
-
   @Prop()
   @Field({ nullable: true })
   gtin?: string;
@@ -62,53 +118,9 @@ export class Product {
   @Field({ nullable: true })
   mpn?: string;
 
-  @Prop({ type: [{ url: String, alt: String }], required: true })
-  @Field(() => [ProductImage])
-  images: ProductImage[];
-
-  @Prop({ required: true })
-  @Field()
-  thumbnailUrl: string;
-
-  @Prop({ required: true, type: Number })
-  @Field(() => Float)
-  price: number;
-
-  @Prop({ required: true, type: Number })
-  @Field(() => Float)
-  mrp: number;
-
-  @Prop({ required: true, type: Number })
-  @Field(() => Float)
-  discountPercent: number;
-
   @Prop({ required: true, default: 'INR' })
   @Field()
   currency: string;
-
-  @Prop({ required: true, type: Number })
-  @Field(() => Float)
-  length: number;
-
-  @Prop({ required: true, type: Number })
-  @Field(() => Float)
-  height: number;
-
-  @Prop({ required: true, type: Number })
-  @Field(() => Float)
-  breadth: number;
-
-  @Prop({ required: true, type: Number })
-  @Field(() => Float)
-  weight: number;
-
-  @Prop({ required: true, default: 'g' })
-  @Field()
-  weightUnit: string;
-
-  @Prop({ required: true })
-  @Field()
-  packageSize: string;
 
   @Prop({ required: true })
   @Field()
@@ -130,13 +142,32 @@ export class Product {
   @Field()
   isGlutenFree: boolean;
 
-  @Prop({ required: true, default: 'in_stock' })
-  @Field()
-  availabilityStatus: string;
-
-  @Prop({ required: true, type: Number, default: 0 })
-  @Field(() => Int)
-  stockQuantity: number;
+  @Prop({
+    type: [{
+      _id: { type: String, required: true },
+      sku: { type: String, required: true },
+      name: { type: String, required: true },
+      price: { type: Number, required: true },
+      mrp: { type: Number, required: true },
+      discountPercent: { type: Number, required: true },
+      discountSource: { type: String, required: true, default: 'product' },
+      weight: { type: Number, required: true },
+      weightUnit: { type: String, required: true },
+      packageSize: { type: String, required: true },
+      length: { type: Number, required: true },
+      height: { type: Number, required: true },
+      breadth: { type: Number, required: true },
+      stockQuantity: { type: Number, required: true, default: 0 },
+      availabilityStatus: { type: String, required: true, default: 'in_stock' },
+      images: { type: [{ url: String, alt: String }], required: true },
+      thumbnailUrl: { type: String, required: true },
+      isDefault: { type: Boolean, required: true, default: false },
+      isActive: { type: Boolean, required: true, default: true },
+    }],
+    required: true,
+  })
+  @Field(() => [ProductVariant])
+  variants: ProductVariant[];
 
   @Prop({ type: Number })
   @Field(() => Float, { nullable: true })
@@ -153,10 +184,6 @@ export class Product {
   @Prop({ type: [String], default: [] })
   @Field(() => [String])
   tags: string[];
-
-  @Prop({ required: true, default: 'product' })
-  @Field()
-  discountSource: string;
 
   @Prop({ default: false })
   @Field()
@@ -188,7 +215,8 @@ ProductSchema.set('toJSON', {
 });
 
 ProductSchema.index({ categoryId: 1 });
-ProductSchema.index({ sku: 1 });
+ProductSchema.index({ 'variants.sku': 1 });
+ProductSchema.index({ 'variants._id': 1 });
 ProductSchema.index({ keywords: 1 });
-ProductSchema.index({ availabilityStatus: 1 });
+ProductSchema.index({ 'variants.availabilityStatus': 1 });
 ProductSchema.index({ createdAt: -1 });

@@ -14,6 +14,9 @@ export class CreateCategoryInput {
   @Field({ nullable: true })
   description?: string;
 
+  @Field({nullable :true})
+  favourite?: boolean;
+
   @Field(() => String, { nullable: true })
   parentId?: string;
 
@@ -43,6 +46,9 @@ export class UpdateCategoryInput {
 
   @Field({ nullable: true })
   description?: string;
+
+  @Field({nullable :true})
+  favourite?: boolean;
 
   @Field(() => String, { nullable: true })
   parentId?: string;

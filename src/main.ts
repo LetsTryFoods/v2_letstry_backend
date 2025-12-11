@@ -10,22 +10,20 @@ async function bootstrap() {
     bufferLogs: true,
   }); 
   app.useLogger(app.get(WinstonLoggerService));
+  const configService = app.get(ConfigService);
+
   app.enableCors({
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? ['https://your-frontend-domain.com']
-        : [
-            'http://localhost:3000',
-            'http://localhost:3001',
-            'https://studio.apollographql.com',
-          ],
+    origin: configService.get<string>('CORS_ORIGINS')?.split(',') || [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://studio.apollographql.com',
+    ],
     credentials: true,
   });
 
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.use(cookieParser());
 
-  const configService = app.get(ConfigService);
   console.log("Server get started")
   await app.listen(configService.get('PORT') ?? 3000);
 }

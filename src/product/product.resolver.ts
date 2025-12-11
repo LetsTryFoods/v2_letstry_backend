@@ -9,8 +9,8 @@ import {
   Parent,
 } from '@nestjs/graphql';
 import { ProductService } from './product.service';
-import { Product } from './product.graphql';
-import { CreateProductInput, UpdateProductInput } from './product.input';
+import { Product, ProductVariant, PriceRange } from './product.graphql';
+import { CreateProductInput, UpdateProductInput, CreateProductVariantInput, UpdateProductVariantInput } from './product.input';
 import { Public } from '../common/decorators/public.decorator';
 import { Category } from '../category/category.graphql';
 import { CategoryLoader } from '../category/category.loader';
@@ -162,6 +162,63 @@ export class ProductResolver {
     return this.productService.updateStock(id, quantity);
   }
 
+  @Mutation(() => Product, { name: 'addProductVariant' })
+  @Roles(Role.ADMIN)
+  async addProductVariant(
+    @Args('productId', { type: () => ID }) productId: string,
+    @Args('input') input: CreateProductVariantInput,
+  ): Promise<Product> {
+    return this.productService.addVariant(productId, input);
+  }
+
+  @Mutation(() => Product, { name: 'updateProductVariant' })
+  @Roles(Role.ADMIN)
+  async updateProductVariant(
+    @Args('productId', { type: () => ID }) productId: string,
+    @Args('variantId', { type: () => ID }) variantId: string,
+    @Args('input') input: UpdateProductVariantInput,
+  ): Promise<Product> {
+    return this.productService.updateVariant(productId, variantId, input);
+  }
+
+  @Mutation(() => Product, { name: 'removeProductVariant' })
+  @Roles(Role.ADMIN)
+  async removeProductVariant(
+    @Args('productId', { type: () => ID }) productId: string,
+    @Args('variantId', { type: () => ID }) variantId: string,
+  ): Promise<Product> {
+    return this.productService.removeVariant(productId, variantId);
+  }
+
+  @Mutation(() => Product, { name: 'setDefaultProductVariant' })
+  @Roles(Role.ADMIN)
+  async setDefaultProductVariant(
+    @Args('productId', { type: () => ID }) productId: string,
+    @Args('variantId', { type: () => ID }) variantId: string,
+  ): Promise<Product> {
+    return this.productService.setDefaultVariant(productId, variantId);
+  }
+
+  @Mutation(() => Product, { name: 'updateProductVariantStock' })
+  @Roles(Role.ADMIN)
+  async updateProductVariantStock(
+    @Args('productId', { type: () => ID }) productId: string,
+    @Args('variantId', { type: () => ID }) variantId: string,
+    @Args('quantity', { type: () => Int }) quantity: number,
+  ): Promise<Product> {
+    return this.productService.updateVariantStock(productId, variantId, quantity);
+  }
+
+  @Query(() => ProductVariant, { name: 'productVariant', nullable: true })
+  @Public()
+  async getProductVariant(
+    @Args('productId', { type: () => ID }) productId: string,
+    @Args('variantId', { type: () => ID }) variantId: string,
+  ): Promise<ProductVariant | null> {
+    const product = await this.productService.findOne(productId);
+    return product.variants.find(v => v._id === variantId) || null;
+  }
+
   @ResolveField(() => Category, { name: 'category', nullable: true })
   async getCategory(@Parent() product: Product): Promise<Category | null> {
     if (!product.categoryId) return null;
@@ -170,5 +227,26 @@ export class ProductResolver {
     )) as any;
   }
 
+  @ResolveField(() => ProductVariant, { name: 'defaultVariant', nullable: true })
+  @Public()
+  async getDefaultVariant(@Parent() product: Product): Promise<ProductVariant | null> {
+    return product.variants.find(v => v.isDefault) || product.variants[0] || null;
+  }
+
+  @ResolveField(() => PriceRange, { name: 'priceRange' })
+  @Public()
+  async getPriceRange(@Parent() product: Product): Promise<PriceRange> {
+    const prices = product.variants.map(v => v.price);
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+    };
+  }
+
+  @ResolveField(() => [ProductVariant], { name: 'availableVariants' })
+  @Public()
+  async getAvailableVariants(@Parent() product: Product): Promise<ProductVariant[]> {
+    return product.variants.filter(v => v.isActive && v.stockQuantity > 0);
+  }
 
 }
