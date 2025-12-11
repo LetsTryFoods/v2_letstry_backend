@@ -8,6 +8,7 @@ import {
   Int,
   GraphQLISODateTime,
 } from '@nestjs/graphql';
+import { ProductSeo } from './product-seo.schema';
 
 export type ProductDocument = Product & Document;
 
@@ -189,33 +190,8 @@ export class Product {
   @Field()
   isArchived: boolean;
 
-  @Prop()
-  @Field({ nullable: true })
-  metaTitle?: string;
-
-  @Prop()
-  @Field({ nullable: true })
-  metaDescription?: string;
-
-  @Prop({ type: [String], default: [] })
-  @Field(() => [String])
-  metaKeywords: string[];
-
-  @Prop()
-  @Field({ nullable: true })
-  canonicalUrl?: string;
-
-  @Prop()
-  @Field({ nullable: true })
-  ogTitle?: string;
-
-  @Prop()
-  @Field({ nullable: true })
-  ogDescription?: string;
-
-  @Prop()
-  @Field({ nullable: true })
-  ogImage?: string;
+  @Field(() => ProductSeo, { nullable: true })
+  seo?: ProductSeo;
 
   @Field(() => GraphQLISODateTime)
   createdAt: Date;

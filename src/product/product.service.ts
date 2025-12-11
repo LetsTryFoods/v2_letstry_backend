@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Product, ProductDocument } from './product.schema';
+import { ProductSeo } from './product-seo.schema';
+import { ProductSeoService } from './product-seo.service';
 import { CreateProductInput, UpdateProductInput } from './product.input';
 import { WinstonLoggerService } from '../logger/logger.service';
 import { SlugService } from '../common/services/slug.service';
@@ -14,6 +16,7 @@ import { ProductCacheStrategyFactory } from './services/product.cache-factory';
 import { ProductQueryService } from './services/product.query-service';
 import { ProductCommandService } from './services/product.command-service';
 import { DEFAULT_PAGE, DEFAULT_LIMIT } from './services/product.types';
+
 @Injectable()
 export class ProductService {
   private readonly queryService: ProductQueryService;
@@ -21,6 +24,7 @@ export class ProductService {
 
   constructor(
     @InjectModel(Product.name) productModel: Model<ProductDocument>,
+    private readonly productSeoService: ProductSeoService,
     slugService: SlugService,
     cacheService: CacheService,
     cacheKeyFactory: CacheKeyFactory,
@@ -42,12 +46,20 @@ export class ProductService {
     );
   }
 
-  create(input: CreateProductInput): Promise<Product> {
-    return this.commandService.create(input);
+  async create(input: CreateProductInput): Promise<Product> {
+    const product = await this.commandService.create(input);
+    if (input.seo) {
+      await this.productSeoService.create(product._id, input.seo);
+    }
+    return product;
   }
 
-  update(id: string, input: UpdateProductInput): Promise<Product> {
-    return this.commandService.update(id, input);
+  async update(id: string, input: UpdateProductInput): Promise<Product> {
+    const product = await this.commandService.update(id, input);
+    if (input.seo) {
+      await this.productSeoService.update(product._id, input.seo);
+    }
+    return product;
   }
 
   remove(id: string): Promise<Product> {
@@ -153,5 +165,9 @@ export class ProductService {
 
   updateVariantStock(productId: string, variantId: string, quantity: number): Promise<Product> {
     return this.commandService.updateVariantStock(productId, variantId, quantity);
+  }
+
+  findSeoByProductId(productId: string): Promise<ProductSeo | null> {
+    return this.productSeoService.findByProductId(productId);
   }
 }

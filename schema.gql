@@ -28,6 +28,20 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type ProductSeo {
+  _id: ID!
+  productId: String!
+  metaTitle: String
+  metaDescription: String
+  metaKeywords: [String!]!
+  canonicalUrl: String
+  ogTitle: String
+  ogDescription: String
+  ogImage: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
 type ProductImage {
   url: String!
   alt: String!
@@ -190,13 +204,7 @@ type Product {
   keywords: [String!]!
   tags: [String!]!
   isArchived: Boolean!
-  metaTitle: String
-  metaDescription: String
-  metaKeywords: [String!]!
-  canonicalUrl: String
-  ogTitle: String
-  ogDescription: String
-  ogImage: String
+  seo: ProductSeo
   createdAt: DateTime!
   updatedAt: DateTime!
   category: Category
@@ -368,13 +376,7 @@ input CreateProductInput {
   keywords: [String!]
   tags: [String!]
   variants: [CreateProductVariantInput!]!
-  metaTitle: String
-  metaDescription: String
-  metaKeywords: [String!]
-  canonicalUrl: String
-  ogTitle: String
-  ogDescription: String
-  ogImage: String
+  seo: ProductSeoInput
 }
 
 input CreateProductVariantInput {
@@ -403,6 +405,16 @@ input ProductImageInput {
   alt: String!
 }
 
+input ProductSeoInput {
+  metaTitle: String
+  metaDescription: String
+  metaKeywords: [String!]
+  canonicalUrl: String
+  ogTitle: String
+  ogDescription: String
+  ogImage: String
+}
+
 input UpdateProductInput {
   name: String
   slug: String
@@ -423,13 +435,7 @@ input UpdateProductInput {
   keywords: [String!]
   tags: [String!]
   variants: [UpdateProductVariantInput!]
-  metaTitle: String
-  metaDescription: String
-  metaKeywords: [String!]
-  canonicalUrl: String
-  ogTitle: String
-  ogDescription: String
-  ogImage: String
+  seo: ProductSeoInput
 }
 
 input UpdateProductVariantInput {

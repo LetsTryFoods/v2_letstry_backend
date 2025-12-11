@@ -230,13 +230,15 @@ describe('Product (e2e)', () => {
                 _id
                 name
                 slug
-                metaTitle
-                metaDescription
-                metaKeywords
-                canonicalUrl
-                ogTitle
-                ogDescription
-                ogImage
+                seo {
+                  metaTitle
+                  metaDescription
+                  metaKeywords
+                  canonicalUrl
+                  ogTitle
+                  ogDescription
+                  ogImage
+                }
                 variants {
                   _id
                   price
@@ -421,13 +423,15 @@ describe('Product (e2e)', () => {
                 ratingCount: 0
                 keywords: ["namkeen", "snacks", "premium"]
                 tags: ["bestseller", "new"]
-                metaTitle: "Buy Premium Namkeen Online - Best Quality"
-                metaDescription: "Shop premium quality namkeen online. Made with finest ingredients for the best taste."
-                metaKeywords: ["premium namkeen", "buy namkeen online", "quality snacks"]
-                canonicalUrl: "https://example.com/products/premium-namkeen"
-                ogTitle: "Premium Namkeen - Best Quality Snacks"
-                ogDescription: "Discover our premium namkeen made with the finest ingredients"
-                ogImage: "https://example.com/og/premium-namkeen.jpg"
+                seo: {
+                  metaTitle: "Buy Premium Namkeen Online - Best Quality"
+                  metaDescription: "Shop premium quality namkeen online. Made with finest ingredients for the best taste."
+                  metaKeywords: ["premium namkeen", "buy namkeen online", "quality snacks"]
+                  canonicalUrl: "https://example.com/products/premium-namkeen"
+                  ogTitle: "Premium Namkeen - Best Quality Snacks"
+                  ogDescription: "Discover our premium namkeen made with the finest ingredients"
+                  ogImage: "https://example.com/og/premium-namkeen.jpg"
+                }
                 variants: [{
                   sku: "PREM001"
                   name: "250g"
@@ -455,13 +459,17 @@ describe('Product (e2e)', () => {
                 _id
                 name
                 slug
-                metaTitle
-                metaDescription
-                metaKeywords
-                canonicalUrl
-                ogTitle
-                ogDescription
-                ogImage
+                seo {
+                  _id
+                  productId
+                  metaTitle
+                  metaDescription
+                  metaKeywords
+                  canonicalUrl
+                  ogTitle
+                  ogDescription
+                  ogImage
+                }
                 variants {
                   _id
                   sku
@@ -477,13 +485,14 @@ describe('Product (e2e)', () => {
           const product = res.body.data.createProduct;
           expect(product.name).toBe('Premium Namkeen');
           expect(product.slug).toBe('premium-namkeen');
-          expect(product.metaTitle).toBe('Buy Premium Namkeen Online - Best Quality');
-          expect(product.metaDescription).toBe('Shop premium quality namkeen online. Made with finest ingredients for the best taste.');
-          expect(product.metaKeywords).toEqual(['premium namkeen', 'buy namkeen online', 'quality snacks']);
-          expect(product.canonicalUrl).toBe('https://example.com/products/premium-namkeen');
-          expect(product.ogTitle).toBe('Premium Namkeen - Best Quality Snacks');
-          expect(product.ogDescription).toBe('Discover our premium namkeen made with the finest ingredients');
-          expect(product.ogImage).toBe('https://example.com/og/premium-namkeen.jpg');
+          expect(product.seo).toBeDefined();
+          expect(product.seo.metaTitle).toBe('Buy Premium Namkeen Online - Best Quality');
+          expect(product.seo.metaDescription).toBe('Shop premium quality namkeen online. Made with finest ingredients for the best taste.');
+          expect(product.seo.metaKeywords).toEqual(['premium namkeen', 'buy namkeen online', 'quality snacks']);
+          expect(product.seo.canonicalUrl).toBe('https://example.com/products/premium-namkeen');
+          expect(product.seo.ogTitle).toBe('Premium Namkeen - Best Quality Snacks');
+          expect(product.seo.ogDescription).toBe('Discover our premium namkeen made with the finest ingredients');
+          expect(product.seo.ogImage).toBe('https://example.com/og/premium-namkeen.jpg');
           expect(product.variants).toHaveLength(1);
           expect(product.variants[0].price).toBe(80);
           expect(product.variants[0].mrp).toBe(100);
@@ -521,16 +530,20 @@ describe('Product (e2e)', () => {
               updateProduct(id: "${productId}", input: {
                 name: "Updated Name"
                 description: "Updated description"
-                metaTitle: "Updated Meta Title"
-                metaDescription: "Updated meta description for SEO"
-                ogTitle: "Updated OG Title"
+                seo: {
+                  metaTitle: "Updated Meta Title"
+                  metaDescription: "Updated meta description for SEO"
+                  ogTitle: "Updated OG Title"
+                }
               }) {
                 _id
                 name
                 description
-                metaTitle
-                metaDescription
-                ogTitle
+                seo {
+                  metaTitle
+                  metaDescription
+                  ogTitle
+                }
               }
             }
           `,
@@ -540,9 +553,10 @@ describe('Product (e2e)', () => {
           const product = res.body.data.updateProduct;
           expect(product.name).toBe('Updated Name');
           expect(product.description).toBe('Updated description');
-          expect(product.metaTitle).toBe('Updated Meta Title');
-          expect(product.metaDescription).toBe('Updated meta description for SEO');
-          expect(product.ogTitle).toBe('Updated OG Title');
+          expect(product.seo).toBeDefined();
+          expect(product.seo.metaTitle).toBe('Updated Meta Title');
+          expect(product.seo.metaDescription).toBe('Updated meta description for SEO');
+          expect(product.seo.ogTitle).toBe('Updated OG Title');
         });
     });
 
