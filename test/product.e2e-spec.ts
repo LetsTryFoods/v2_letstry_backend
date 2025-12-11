@@ -105,6 +105,29 @@ describe('Product (e2e)', () => {
     } catch (e) {}
   });
 
+  const createTestVariant = (overrides = {}) => ({
+    _id: new Date().getTime().toString() + Math.random().toString(36).substr(2, 9),
+    sku: `SKU${Math.random().toString(36).substr(2, 9)}`,
+    name: '200g',
+    price: 50,
+    mrp: 60,
+    discountPercent: 16.67,
+    discountSource: 'product',
+    weight: 200,
+    weightUnit: 'g',
+    packageSize: '200g pack',
+    length: 10,
+    height: 15,
+    breadth: 5,
+    stockQuantity: 100,
+    availabilityStatus: 'in_stock',
+    images: [{ url: 'https://example.com/sev.jpg', alt: 'Masala Sev' }],
+    thumbnailUrl: 'https://example.com/sev-thumb.jpg',
+    isDefault: true,
+    isActive: true,
+    ...overrides,
+  });
+
   describe('Product Queries (Public)', () => {
     it('should get empty products list', () => {
       return request(app.getHttpServer())
@@ -134,29 +157,15 @@ describe('Product (e2e)', () => {
         description: "Crispy masala sev",
         categoryId: categoryId,
         brand: "Local Brand",
-        sku: "SKU001",
-        images: [{ url: "https://example.com/sev.jpg", alt: "Masala Sev" }],
-        thumbnailUrl: "https://example.com/sev-thumb.jpg",
-        price: 50,
-        mrp: 60,
-        discountPercent: 16.67,
         currency: "INR",
-        length: 10,
-        height: 15,
-        breadth: 5,
-        weight: 200,
-        weightUnit: "g",
-        packageSize: "200g pack",
         ingredients: "Gram flour, spices",
         shelfLife: "6 months",
         isVegetarian: true,
         isGlutenFree: false,
-        availabilityStatus: "in_stock",
-        stockQuantity: 100,
         ratingCount: 0,
         keywords: ["sev", "snacks"],
         tags: ["bestseller"],
-        discountSource: "product",
+        variants: [createTestVariant()],
         isArchived: false,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -167,7 +176,7 @@ describe('Product (e2e)', () => {
         .send({
           query: `
             query {
-              products {
+              products(includeOutOfStock: true) {
                 items {
                   _id
                   name
@@ -195,8 +204,16 @@ describe('Product (e2e)', () => {
         slug: "test-product",
         description: "Test description",
         categoryId: categoryId,
-        price: 100,
-        mrp: 120,
+        brand: "Test Brand",
+        currency: "INR",
+        ingredients: "Test ingredients",
+        shelfLife: "6 months",
+        isVegetarian: true,
+        isGlutenFree: false,
+        ratingCount: 0,
+        keywords: [],
+        tags: [],
+        variants: [createTestVariant()],
         isArchived: false,
         availabilityStatus: "in_stock",
         createdAt: new Date(),
@@ -213,8 +230,12 @@ describe('Product (e2e)', () => {
                 _id
                 name
                 slug
-                price
-                mrp
+                variants {
+                  _id
+                  price
+                  mrp
+                  sku
+                }
               }
             }
           `,
@@ -223,6 +244,8 @@ describe('Product (e2e)', () => {
         .expect((res) => {
           expect(res.body.data.product).toBeDefined();
           expect(res.body.data.product.name).toBe('Test Product');
+          expect(res.body.data.product.variants).toBeDefined();
+          expect(res.body.data.product.variants.length).toBeGreaterThan(0);
         });
     });
 
@@ -267,10 +290,17 @@ describe('Product (e2e)', () => {
         slug: "category-product-1",
         description: "Test",
         categoryId: categoryId,
-        price: 50,
-        mrp: 60,
+        brand: "Test Brand",
+        currency: "INR",
+        ingredients: "Test ingredients",
+        shelfLife: "6 months",
+        isVegetarian: true,
+        isGlutenFree: false,
+        ratingCount: 0,
+        keywords: [],
+        tags: [],
+        variants: [createTestVariant()],
         isArchived: false,
-        availabilityStatus: "in_stock",
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -305,11 +335,17 @@ describe('Product (e2e)', () => {
         slug: "spicy-masala-chips",
         description: "Hot and spicy chips",
         categoryId: categoryId,
-        price: 30,
-        mrp: 40,
+        brand: "Test Brand",
+        currency: "INR",
+        ingredients: "Test ingredients",
+        shelfLife: "6 months",
+        isVegetarian: true,
+        isGlutenFree: false,
+        ratingCount: 0,
         keywords: ["chips", "spicy", "masala"],
+        tags: [],
+        variants: [createTestVariant()],
         isArchived: false,
-        availabilityStatus: "in_stock",
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -368,40 +404,49 @@ describe('Product (e2e)', () => {
                 description: "Best quality namkeen"
                 categoryId: "${categoryId}"
                 brand: "Premium Brand"
-                sku: "PREM001"
                 gtin: "1234567890123"
-                images: [
-                  { url: "https://example.com/namkeen1.jpg", alt: "Front view" }
-                  { url: "https://example.com/namkeen2.jpg", alt: "Back view" }
-                ]
-                thumbnailUrl: "https://example.com/namkeen-thumb.jpg"
-                price: 80
-                mrp: 100
-                discountPercent: 20
                 currency: "INR"
-                length: 12
-                height: 18
-                breadth: 6
-                weight: 250
-                weightUnit: "g"
-                packageSize: "250g family pack"
                 ingredients: "Gram flour, salt, spices, oil"
                 allergens: "May contain traces of nuts"
                 shelfLife: "8 months"
                 isVegetarian: true
                 isGlutenFree: false
-                availabilityStatus: "in_stock"
-                stockQuantity: 150
                 ratingCount: 0
                 keywords: ["namkeen", "snacks", "premium"]
                 tags: ["bestseller", "new"]
-                discountSource: "product"
+                variants: [{
+                  sku: "PREM001"
+                  name: "250g"
+                  price: 80
+                  mrp: 100
+                  discountPercent: 20
+                  discountSource: "product"
+                  weight: 250
+                  weightUnit: "g"
+                  packageSize: "250g family pack"
+                  length: 12
+                  height: 18
+                  breadth: 6
+                  stockQuantity: 150
+                  availabilityStatus: "in_stock"
+                  images: [
+                    { url: "https://example.com/namkeen1.jpg", alt: "Front view" }
+                    { url: "https://example.com/namkeen2.jpg", alt: "Back view" }
+                  ]
+                  thumbnailUrl: "https://example.com/namkeen-thumb.jpg"
+                  isDefault: true
+                  isActive: true
+                }]
               }) {
                 _id
                 name
                 slug
-                price
-                mrp
+                variants {
+                  _id
+                  sku
+                  price
+                  mrp
+                }
               }
             }
           `,
@@ -411,8 +456,9 @@ describe('Product (e2e)', () => {
           const product = res.body.data.createProduct;
           expect(product.name).toBe('Premium Namkeen');
           expect(product.slug).toBe('premium-namkeen');
-          expect(product.price).toBe(80);
-          expect(product.mrp).toBe(100);
+          expect(product.variants).toHaveLength(1);
+          expect(product.variants[0].price).toBe(80);
+          expect(product.variants[0].mrp).toBe(100);
         });
     });
 
@@ -422,8 +468,17 @@ describe('Product (e2e)', () => {
         slug: "original-slug",
         description: "Original",
         categoryId: categoryId,
-        price: 50,
-        mrp: 60,
+        brand: "Original Brand",
+        currency: "INR",
+        ingredients: "Original ingredients",
+        shelfLife: "6 months",
+        isVegetarian: true,
+        isGlutenFree: false,
+        ratingCount: 0,
+        keywords: [],
+        tags: [],
+        variants: [createTestVariant()],
+        isArchived: false,
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -438,14 +493,10 @@ describe('Product (e2e)', () => {
               updateProduct(id: "${productId}", input: {
                 name: "Updated Name"
                 description: "Updated description"
-                price: 70
-                mrp: 85
               }) {
                 _id
                 name
                 description
-                price
-                mrp
               }
             }
           `,
@@ -455,20 +506,26 @@ describe('Product (e2e)', () => {
           const product = res.body.data.updateProduct;
           expect(product.name).toBe('Updated Name');
           expect(product.description).toBe('Updated description');
-          expect(product.price).toBe(70);
-          expect(product.mrp).toBe(85);
         });
     });
 
     it('should fail to create product with duplicate slug', async () => {
-      // First create a product
       await connection.collection('products').insertOne({
         name: "Unique Product",
         slug: "unique-product-slug",
         description: "Test",
         categoryId: categoryId,
-        price: 50,
-        mrp: 60,
+        brand: "Test Brand",
+        currency: "INR",
+        ingredients: "Test ingredients",
+        shelfLife: "6 months",
+        isVegetarian: true,
+        isGlutenFree: false,
+        ratingCount: 0,
+        keywords: [],
+        tags: [],
+        variants: [createTestVariant()],
+        isArchived: false,
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -486,29 +543,34 @@ describe('Product (e2e)', () => {
                 description: "Test"
                 categoryId: "${categoryId}"
                 brand: "Brand"
-                sku: "ANOTH001"
-                images: [{ url: "https://example.com/img.jpg", alt: "Img" }]
-                thumbnailUrl: "https://example.com/thumb.jpg"
-                price: 50
-                mrp: 60
-                discountPercent: 16.67
                 currency: "INR"
-                length: 5
-                height: 5
-                breadth: 5
-                weight: 100
-                weightUnit: "g"
-                packageSize: "100g"
                 ingredients: "Test"
                 shelfLife: "6 months"
                 isVegetarian: true
                 isGlutenFree: false
-                availabilityStatus: "in_stock"
-                stockQuantity: 50
                 ratingCount: 0
                 keywords: ["test"]
                 tags: ["test"]
-                discountSource: "product"
+                variants: [{
+                  sku: "ANOTH001"
+                  name: "100g"
+                  price: 50
+                  mrp: 60
+                  discountPercent: 16.67
+                  discountSource: "product"
+                  weight: 100
+                  weightUnit: "g"
+                  packageSize: "100g"
+                  length: 5
+                  height: 5
+                  breadth: 5
+                  stockQuantity: 50
+                  availabilityStatus: "in_stock"
+                  images: [{ url: "https://example.com/img.jpg", alt: "Img" }]
+                  thumbnailUrl: "https://example.com/thumb.jpg"
+                  isDefault: true
+                  isActive: true
+                }]
               }) {
                 _id
               }
@@ -539,29 +601,34 @@ describe('Product (e2e)', () => {
                 description: "Test"
                 categoryId: "${categoryId}"
                 brand: "Brand"
-                sku: "USER001"
-                images: [{ url: "https://example.com/img.jpg", alt: "Img" }]
-                thumbnailUrl: "https://example.com/thumb.jpg"
-                price: 50
-                mrp: 60
-                discountPercent: 16.67
                 currency: "INR"
-                length: 5
-                height: 5
-                breadth: 5
-                weight: 100
-                weightUnit: "g"
-                packageSize: "100g"
                 ingredients: "Test"
                 shelfLife: "6 months"
                 isVegetarian: true
                 isGlutenFree: false
-                availabilityStatus: "in_stock"
-                stockQuantity: 50
                 ratingCount: 0
                 keywords: ["test"]
                 tags: ["test"]
-                discountSource: "product"
+                variants: [{
+                  sku: "USER001"
+                  name: "100g"
+                  price: 50
+                  mrp: 60
+                  discountPercent: 16.67
+                  discountSource: "product"
+                  weight: 100
+                  weightUnit: "g"
+                  packageSize: "100g"
+                  length: 5
+                  height: 5
+                  breadth: 5
+                  stockQuantity: 50
+                  availabilityStatus: "in_stock"
+                  images: [{ url: "https://example.com/img.jpg", alt: "Img" }]
+                  thumbnailUrl: "https://example.com/thumb.jpg"
+                  isDefault: true
+                  isActive: true
+                }]
               }) {
                 _id
                 name
@@ -580,9 +647,19 @@ describe('Product (e2e)', () => {
       const product = await connection.collection('products').insertOne({
         name: "Test",
         slug: "test",
+        description: "Test",
         categoryId: categoryId,
-        price: 50,
-        mrp: 60,
+        brand: "Test Brand",
+        currency: "INR",
+        ingredients: "Test ingredients",
+        shelfLife: "6 months",
+        isVegetarian: true,
+        isGlutenFree: false,
+        ratingCount: 0,
+        keywords: [],
+        tags: [],
+        variants: [createTestVariant()],
+        isArchived: false,
         createdAt: new Date(),
         updatedAt: new Date()
       });

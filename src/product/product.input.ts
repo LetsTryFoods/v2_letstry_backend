@@ -10,6 +10,123 @@ export class ProductImageInput {
 }
 
 @InputType()
+export class CreateProductVariantInput {
+  @Field()
+  sku: string;
+
+  @Field()
+  name: string;
+
+  @Field(() => Float)
+  price: number;
+
+  @Field(() => Float)
+  mrp: number;
+
+  @Field(() => Float)
+  discountPercent: number;
+
+  @Field({ defaultValue: 'product' })
+  discountSource: string;
+
+  @Field(() => Float)
+  weight: number;
+
+  @Field({ defaultValue: 'g' })
+  weightUnit: string;
+
+  @Field()
+  packageSize: string;
+
+  @Field(() => Float)
+  length: number;
+
+  @Field(() => Float)
+  height: number;
+
+  @Field(() => Float)
+  breadth: number;
+
+  @Field(() => Int, { defaultValue: 0 })
+  stockQuantity: number;
+
+  @Field({ defaultValue: 'in_stock' })
+  availabilityStatus: string;
+
+  @Field(() => [ProductImageInput])
+  images: ProductImageInput[];
+
+  @Field()
+  thumbnailUrl: string;
+
+  @Field({ defaultValue: false })
+  isDefault: boolean;
+
+  @Field({ defaultValue: true })
+  isActive: boolean;
+}
+
+@InputType()
+export class UpdateProductVariantInput {
+  @Field()
+  _id: string;
+
+  @Field({ nullable: true })
+  sku?: string;
+
+  @Field({ nullable: true })
+  name?: string;
+
+  @Field(() => Float, { nullable: true })
+  price?: number;
+
+  @Field(() => Float, { nullable: true })
+  mrp?: number;
+
+  @Field(() => Float, { nullable: true })
+  discountPercent?: number;
+
+  @Field({ nullable: true })
+  discountSource?: string;
+
+  @Field(() => Float, { nullable: true })
+  weight?: number;
+
+  @Field({ nullable: true })
+  weightUnit?: string;
+
+  @Field({ nullable: true })
+  packageSize?: string;
+
+  @Field(() => Float, { nullable: true })
+  length?: number;
+
+  @Field(() => Float, { nullable: true })
+  height?: number;
+
+  @Field(() => Float, { nullable: true })
+  breadth?: number;
+
+  @Field(() => Int, { nullable: true })
+  stockQuantity?: number;
+
+  @Field({ nullable: true })
+  availabilityStatus?: string;
+
+  @Field(() => [ProductImageInput], { nullable: true })
+  images?: ProductImageInput[];
+
+  @Field({ nullable: true })
+  thumbnailUrl?: string;
+
+  @Field({ nullable: true })
+  isDefault?: boolean;
+
+  @Field({ nullable: true })
+  isActive?: boolean;
+}
+
+@InputType()
 export class CreateProductInput {
   @Field()
   name: string;
@@ -17,7 +134,7 @@ export class CreateProductInput {
   @Field({ nullable: true })
   slug?: string;
 
-  @Field({nullable :true})
+  @Field({ nullable: true })
   favourite?: boolean;
 
   @Field()
@@ -29,50 +146,14 @@ export class CreateProductInput {
   @Field()
   brand: string;
 
-  @Field()
-  sku: string;
-
   @Field({ nullable: true })
   gtin?: string;
 
   @Field({ nullable: true })
   mpn?: string;
 
-  @Field(() => [ProductImageInput])
-  images: ProductImageInput[];
-
-  @Field()
-  thumbnailUrl: string;
-
-  @Field(() => Float)
-  price: number;
-
-  @Field(() => Float)
-  mrp: number;
-
-  @Field(() => Float)
-  discountPercent: number;
-
   @Field({ nullable: true, defaultValue: 'INR' })
   currency?: string;
-
-  @Field(() => Float)
-  length: number;
-
-  @Field(() => Float)
-  height: number;
-
-  @Field(() => Float)
-  breadth: number;
-
-  @Field(() => Float)
-  weight: number;
-
-  @Field({ nullable: true, defaultValue: 'g' })
-  weightUnit?: string;
-
-  @Field()
-  packageSize: string;
 
   @Field()
   ingredients: string;
@@ -89,12 +170,6 @@ export class CreateProductInput {
   @Field({ nullable: true, defaultValue: false })
   isGlutenFree?: boolean;
 
-  @Field({ nullable: true, defaultValue: 'in_stock' })
-  availabilityStatus?: string;
-
-  @Field(() => Int, { nullable: true, defaultValue: 0 })
-  stockQuantity?: number;
-
   @Field(() => Float, { nullable: true })
   rating?: number;
 
@@ -107,8 +182,8 @@ export class CreateProductInput {
   @Field(() => [String], { nullable: true })
   tags?: string[];
 
-  @Field({ nullable: true, defaultValue: 'product' })
-  discountSource?: string;
+  @Field(() => [CreateProductVariantInput])
+  variants: CreateProductVariantInput[];
 }
 
 @InputType()
@@ -132,49 +207,13 @@ export class UpdateProductInput {
   brand?: string;
 
   @Field({ nullable: true })
-  sku?: string;
-
-  @Field({ nullable: true })
   gtin?: string;
 
   @Field({ nullable: true })
   mpn?: string;
 
-  @Field(() => [ProductImageInput], { nullable: true })
-  images?: ProductImageInput[];
-
-  @Field({ nullable: true })
-  thumbnailUrl?: string;
-
-  @Field(() => Float, { nullable: true })
-  price?: number;
-
-  @Field(() => Float, { nullable: true })
-  mrp?: number;
-
-  @Field(() => Float, { nullable: true })
-  discountPercent?: number;
-
   @Field({ nullable: true })
   currency?: string;
-
-  @Field(() => Float, { nullable: true })
-  length?: number;
-
-  @Field(() => Float, { nullable: true })
-  height?: number;
-
-  @Field(() => Float, { nullable: true })
-  breadth?: number;
-
-  @Field(() => Float, { nullable: true })
-  weight?: number;
-
-  @Field({ nullable: true })
-  weightUnit?: string;
-
-  @Field({ nullable: true })
-  packageSize?: string;
 
   @Field({ nullable: true })
   ingredients?: string;
@@ -191,12 +230,6 @@ export class UpdateProductInput {
   @Field({ nullable: true })
   isGlutenFree?: boolean;
 
-  @Field({ nullable: true })
-  availabilityStatus?: string;
-
-  @Field(() => Int, { nullable: true })
-  stockQuantity?: number;
-
   @Field(() => Float, { nullable: true })
   rating?: number;
 
@@ -209,6 +242,6 @@ export class UpdateProductInput {
   @Field(() => [String], { nullable: true })
   tags?: string[];
 
-  @Field({ nullable: true })
-  discountSource?: string;
+  @Field(() => [UpdateProductVariantInput], { nullable: true })
+  variants?: UpdateProductVariantInput[];
 }

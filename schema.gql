@@ -33,6 +33,28 @@ type ProductImage {
   alt: String!
 }
 
+type ProductVariant {
+  _id: ID!
+  sku: String!
+  name: String!
+  price: Float!
+  mrp: Float!
+  discountPercent: Float!
+  discountSource: String!
+  weight: Float!
+  weightUnit: String!
+  packageSize: String!
+  length: Float!
+  height: Float!
+  breadth: Float!
+  stockQuantity: Int!
+  availabilityStatus: String!
+  images: [ProductImage!]!
+  thumbnailUrl: String!
+  isDefault: Boolean!
+  isActive: Boolean!
+}
+
 type DashboardStats {
   totalProducts: Float!
   archivedProducts: Float!
@@ -154,37 +176,31 @@ type Product {
   description: String!
   categoryId: String!
   brand: String!
-  sku: String!
   gtin: String
   mpn: String
-  images: [ProductImage!]!
-  thumbnailUrl: String!
-  price: Float!
-  mrp: Float!
-  discountPercent: Float!
   currency: String!
-  length: Float!
-  height: Float!
-  breadth: Float!
-  weight: Float!
-  weightUnit: String!
-  packageSize: String!
   ingredients: String!
   allergens: String
   shelfLife: String!
   isVegetarian: Boolean!
   isGlutenFree: Boolean!
-  availabilityStatus: String!
-  stockQuantity: Int!
+  variants: [ProductVariant!]!
   rating: Float
   ratingCount: Int!
   keywords: [String!]!
   tags: [String!]!
-  discountSource: String!
   isArchived: Boolean!
   createdAt: DateTime!
   updatedAt: DateTime!
   category: Category
+  defaultVariant: ProductVariant
+  priceRange: PriceRange!
+  availableVariants: [ProductVariant!]!
+}
+
+type PriceRange {
+  min: Float!
+  max: Float!
 }
 
 type Category {
@@ -257,6 +273,7 @@ type Query {
   productBySlug(slug: String!): Product
   productsByCategory(categoryId: ID!, pagination: PaginationInput! = {page: 1, limit: 10}): PaginatedProducts!
   searchProducts(searchTerm: String!, pagination: PaginationInput! = {page: 1, limit: 10}): PaginatedProducts!
+  productVariant(productId: ID!, variantId: ID!): ProductVariant
   categories(pagination: PaginationInput! = {page: 1, limit: 10}, includeArchived: Boolean! = false): PaginatedCategories!
   rootCategories(pagination: PaginationInput! = {page: 1, limit: 10}, includeArchived: Boolean! = false): PaginatedCategories!
   categoryChildren(parentId: ID!, pagination: PaginationInput! = {page: 1, limit: 10}, includeArchived: Boolean! = false): PaginatedCategories!
@@ -290,6 +307,11 @@ type Mutation {
   archiveProduct(id: ID!): Product!
   unarchiveProduct(id: ID!): Product!
   updateProductStock(id: ID!, quantity: Int!): Product!
+  addProductVariant(productId: ID!, input: CreateProductVariantInput!): Product!
+  updateProductVariant(productId: ID!, variantId: ID!, input: UpdateProductVariantInput!): Product!
+  removeProductVariant(productId: ID!, variantId: ID!): Product!
+  setDefaultProductVariant(productId: ID!, variantId: ID!): Product!
+  updateProductVariantStock(productId: ID!, variantId: ID!, quantity: Int!): Product!
   createCategory(input: CreateCategoryInput!): Category!
   updateCategory(id: ID!, input: UpdateCategoryInput!): Category!
   archiveCategory(id: ID!): Category!
@@ -303,6 +325,7 @@ type Mutation {
   updatePolicy(id: ID!, input: UpdatePolicyInput!): Policy!
   deletePolicy(id: ID!): Policy!
   createGuest(input: CreateGuestInput!): Guest!
+  updateGuest(id: ID!, input: UpdateGuestInput!): Guest!
   addToCart(input: AddToCartInput!): Cart!
   updateCartItem(input: UpdateCartItemInput!): Cart!
   removeFromCart(productId: ID!): Cart!
@@ -325,33 +348,40 @@ input CreateProductInput {
   description: String!
   categoryId: String!
   brand: String!
-  sku: String!
   gtin: String
   mpn: String
-  images: [ProductImageInput!]!
-  thumbnailUrl: String!
-  price: Float!
-  mrp: Float!
-  discountPercent: Float!
   currency: String = "INR"
-  length: Float!
-  height: Float!
-  breadth: Float!
-  weight: Float!
-  weightUnit: String = "g"
-  packageSize: String!
   ingredients: String!
   allergens: String
   shelfLife: String!
   isVegetarian: Boolean = true
   isGlutenFree: Boolean = false
-  availabilityStatus: String = "in_stock"
-  stockQuantity: Int = 0
   rating: Float
   ratingCount: Int = 0
   keywords: [String!]
   tags: [String!]
-  discountSource: String = "product"
+  variants: [CreateProductVariantInput!]!
+}
+
+input CreateProductVariantInput {
+  sku: String!
+  name: String!
+  price: Float!
+  mrp: Float!
+  discountPercent: Float!
+  discountSource: String! = "product"
+  weight: Float!
+  weightUnit: String! = "g"
+  packageSize: String!
+  length: Float!
+  height: Float!
+  breadth: Float!
+  stockQuantity: Int! = 0
+  availabilityStatus: String! = "in_stock"
+  images: [ProductImageInput!]!
+  thumbnailUrl: String!
+  isDefault: Boolean! = false
+  isActive: Boolean! = true
 }
 
 input ProductImageInput {
@@ -366,33 +396,41 @@ input UpdateProductInput {
   categoryId: String
   favourite: Boolean
   brand: String
-  sku: String
   gtin: String
   mpn: String
-  images: [ProductImageInput!]
-  thumbnailUrl: String
-  price: Float
-  mrp: Float
-  discountPercent: Float
   currency: String
-  length: Float
-  height: Float
-  breadth: Float
-  weight: Float
-  weightUnit: String
-  packageSize: String
   ingredients: String
   allergens: String
   shelfLife: String
   isVegetarian: Boolean
   isGlutenFree: Boolean
-  availabilityStatus: String
-  stockQuantity: Int
   rating: Float
   ratingCount: Int
   keywords: [String!]
   tags: [String!]
+  variants: [UpdateProductVariantInput!]
+}
+
+input UpdateProductVariantInput {
+  _id: String!
+  sku: String
+  name: String
+  price: Float
+  mrp: Float
+  discountPercent: Float
   discountSource: String
+  weight: Float
+  weightUnit: String
+  packageSize: String
+  length: Float
+  height: Float
+  breadth: Float
+  stockQuantity: Int
+  availabilityStatus: String
+  images: [ProductImageInput!]
+  thumbnailUrl: String
+  isDefault: Boolean
+  isActive: Boolean
 }
 
 input CreateCategoryInput {
@@ -468,6 +506,11 @@ input UpdatePolicyInput {
 }
 
 input CreateGuestInput {
+  ipAddress: String
+  deviceInfo: JSON
+}
+
+input UpdateGuestInput {
   ipAddress: String
   deviceInfo: JSON
 }

@@ -1,7 +1,7 @@
 import { Resolver, Query, Mutation, Args, ID, Context } from '@nestjs/graphql';
 import { GuestService } from './guest.service';
 import { Guest } from './guest.schema';
-import { CreateGuestInput } from './guest.input';
+import { CreateGuestInput, UpdateGuestInput } from './guest.input';
 import { Public } from '../common/decorators/public.decorator';
 import { WinstonLoggerService } from '../logger/logger.service';
 
@@ -49,5 +49,15 @@ export class GuestResolver {
     }
 
     return guest;
+  }
+
+  @Mutation(() => Guest, { name: 'updateGuest' })
+  @Public()
+  async updateGuest(
+    @Args('id', { type: () => ID }) id: string,
+    @Args('input') input: UpdateGuestInput,
+  ): Promise<Guest> {
+    this.logger.log('Resolver: updateGuest called', { id, input }, 'GuestModule');
+    return this.guestService.update(id, input);
   }
 }

@@ -160,4 +160,10 @@ export class CategoryResolver {
   async getProducts(@Parent() category: Category): Promise<Product[]> {
     return this.productService.findByCategoryId(category.id);
   }
+
+  @ResolveField(() => Number, { name: 'productCount' })
+  @Public()
+  async getProductCount(@Parent() category: Category): Promise<number> {
+    return this.productService.countByCategoryId(category.id);
+  }
 }

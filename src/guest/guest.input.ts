@@ -13,3 +13,15 @@ export class CreateGuestInput {
   @IsOptional()
   deviceInfo?: any;
 }
+
+@InputType()
+export class UpdateGuestInput {
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  ipAddress?: string;
+
+  @Field(() => GraphQLJSON, { nullable: true })
+  @IsOptional()
+  deviceInfo?: any;
+}
