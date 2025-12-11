@@ -27,7 +27,7 @@ export class AdminResolver {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60 * 1000,
+      maxAge: 60 * 60 * 10000,
     });
     return token.access_token;
   }
