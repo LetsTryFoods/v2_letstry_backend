@@ -190,6 +190,13 @@ type Product {
   keywords: [String!]!
   tags: [String!]!
   isArchived: Boolean!
+  metaTitle: String
+  metaDescription: String
+  metaKeywords: [String!]!
+  canonicalUrl: String
+  ogTitle: String
+  ogDescription: String
+  ogImage: String
   createdAt: DateTime!
   updatedAt: DateTime!
   category: Category
@@ -361,6 +368,13 @@ input CreateProductInput {
   keywords: [String!]
   tags: [String!]
   variants: [CreateProductVariantInput!]!
+  metaTitle: String
+  metaDescription: String
+  metaKeywords: [String!]
+  canonicalUrl: String
+  ogTitle: String
+  ogDescription: String
+  ogImage: String
 }
 
 input CreateProductVariantInput {
@@ -409,6 +423,13 @@ input UpdateProductInput {
   keywords: [String!]
   tags: [String!]
   variants: [UpdateProductVariantInput!]
+  metaTitle: String
+  metaDescription: String
+  metaKeywords: [String!]
+  canonicalUrl: String
+  ogTitle: String
+  ogDescription: String
+  ogImage: String
 }
 
 input UpdateProductVariantInput {
