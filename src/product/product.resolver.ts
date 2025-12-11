@@ -10,6 +10,7 @@ import {
 } from '@nestjs/graphql';
 import { ProductService } from './product.service';
 import { Product, ProductVariant, PriceRange } from './product.graphql';
+import { ProductSeo } from './product-seo.schema';
 import { CreateProductInput, UpdateProductInput, CreateProductVariantInput, UpdateProductVariantInput } from './product.input';
 import { Public } from '../common/decorators/public.decorator';
 import { Category } from '../category/category.graphql';
@@ -247,6 +248,12 @@ export class ProductResolver {
   @Public()
   async getAvailableVariants(@Parent() product: Product): Promise<ProductVariant[]> {
     return product.variants.filter(v => v.isActive && v.stockQuantity > 0);
+  }
+
+  @ResolveField(() => ProductSeo, { name: 'seo', nullable: true })
+  @Public()
+  async getSeo(@Parent() product: Product): Promise<ProductSeo | null> {
+    return this.productService.findSeoByProductId(product._id);
   }
 
 }

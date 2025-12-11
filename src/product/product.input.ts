@@ -1,4 +1,5 @@
 import { InputType, Field, Float, Int } from '@nestjs/graphql';
+import { ProductSeoInput } from './product-seo.input';
 
 @InputType()
 export class ProductImageInput {
@@ -184,6 +185,9 @@ export class CreateProductInput {
 
   @Field(() => [CreateProductVariantInput])
   variants: CreateProductVariantInput[];
+
+  @Field(() => ProductSeoInput, { nullable: true })
+  seo?: ProductSeoInput;
 }
 
 @InputType()
@@ -247,4 +251,7 @@ export class UpdateProductInput {
 
   @Field(() => [UpdateProductVariantInput], { nullable: true })
   variants?: UpdateProductVariantInput[];
+
+  @Field(() => ProductSeoInput, { nullable: true })
+  seo?: ProductSeoInput;
 }
