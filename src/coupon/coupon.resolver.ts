@@ -29,6 +29,7 @@ export class CouponResolver {
   @Query(() => [Coupon], { name: 'coupons' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN)
   async getAllCoupons(): Promise<Coupon[]> {
     return this.couponService.getAllCoupons();
   }
