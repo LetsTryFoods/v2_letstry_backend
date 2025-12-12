@@ -44,6 +44,16 @@ export class ProductQueryService {
     );
   }
 
+  async findByVariantId(variantId: string, includeArchived: boolean): Promise<Product> {
+    const filter = ProductQueryBuilder.forVariantId(variantId, includeArchived);
+    const strategy = this.cacheStrategyFactory.createNoCache<Product>();
+    return this.executor.executeFindOneOrThrow(
+      filter,
+      strategy,
+      `Product with variant ID ${variantId} not found`,
+    );
+  }
+
   async findByCategoryId(
     categoryId: string,
     includeArchived: boolean,

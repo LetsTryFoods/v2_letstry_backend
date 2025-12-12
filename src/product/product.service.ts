@@ -94,6 +94,10 @@ export class ProductService {
     return this.queryService.findByCategoryId(categoryId, includeArchived);
   }
 
+  findByVariantId(variantId: string, includeArchived = false): Promise<Product> {
+    return this.queryService.findByVariantId(variantId, includeArchived);
+  }
+
   searchProducts(searchTerm: string, includeArchived = false): Promise<Product[]> {
     return this.queryService.searchProducts(searchTerm, includeArchived);
   }

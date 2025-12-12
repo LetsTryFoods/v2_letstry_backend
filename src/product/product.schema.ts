@@ -21,7 +21,7 @@ export class ProductImage {
   alt: string;
 }
 
-@Schema()
+@Schema({ _id: true })
 @ObjectType()
 export class ProductVariant {
   @Field(() => ID)

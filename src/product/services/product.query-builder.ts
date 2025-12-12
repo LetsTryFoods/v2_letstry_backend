@@ -25,6 +25,11 @@ export class ProductQueryBuilder {
     return this;
   }
 
+  withVariantId(variantId: string): this {
+    this.filter['variants._id'] = variantId;
+    return this;
+  }
+
   withoutOutOfStock(includeOutOfStock: boolean): this {
     if (!includeOutOfStock) {
       this.filter.variants = {
@@ -108,6 +113,13 @@ export class ProductQueryBuilder {
       .withSearch(searchTerm)
       .withArchived(includeArchived)
       .withoutOutOfStock(false)
+      .build();
+  }
+
+  static forVariantId(variantId: string, includeArchived: boolean): ProductFilter {
+    return new ProductQueryBuilder()
+      .withArchived(includeArchived)
+      .withVariantId(variantId)
       .build();
   }
 

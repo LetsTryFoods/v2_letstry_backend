@@ -20,6 +20,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         (request: any) => {
           return request?.cookies?.access_token;
         },
+        (request: any) => {
+          return request?.cookies?.auth_token;
+        },
       ]),
       ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_SECRET') || 'defaultSecret',
@@ -27,13 +30,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    switch (payload.role) {
-      case Role.ADMIN:
-        return this.adminAuthService.validateJwtPayload(payload);
-      case Role.USER:
-        return this.userAuthService.validateJwtPayload(payload);
-      default:
-        return null;
+    try {
+      switch (payload.role) {
+        case Role.ADMIN:
+          return this.adminAuthService.validateJwtPayload(payload);
+        case Role.USER:
+          return this.userAuthService.validateJwtPayload(payload);
+        default:
+          return null;
+      }
+    } catch (error) {
+      // For optional authentication, don't throw errors
+      return null;
     }
   }
 }

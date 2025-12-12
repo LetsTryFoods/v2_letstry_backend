@@ -4,8 +4,8 @@ import { CartService } from './cart.service';
 import { Cart } from './cart.schema';
 import { AddToCartInput, UpdateCartItemInput } from './cart.input';
 import { Public } from '../common/decorators/public.decorator';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
+import { OptionalUser } from '../common/decorators/optional-user.decorator';
 
 @Resolver(() => Cart)
 export class CartResolver {
@@ -21,23 +21,23 @@ export class CartResolver {
 
   @Query(() => Cart, { name: 'myCart', nullable: true })
   @Public()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard)
   async getMyCart(
     @Context() context: any,
-    @CurrentUser() user: any,
+    @OptionalUser() user: any,
   ): Promise<Cart | null> {
-    const userId = user?._id; 
+    const userId = user?._id;
     const sessionId = this.getSessionId(context);
     return this.cartService.getCart(userId, sessionId);
   }
 
   @Mutation(() => Cart, { name: 'addToCart' })
   @Public()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard)
   async addToCart(
     @Args('input') input: AddToCartInput,
     @Context() context: any,
-    @CurrentUser() user: any,
+    @OptionalUser() user: any,
   ): Promise<Cart> {
     const userId = user?._id;
     const sessionId = this.getSessionId(context);
@@ -46,11 +46,11 @@ export class CartResolver {
 
   @Mutation(() => Cart, { name: 'updateCartItem' })
   @Public()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard)
   async updateCartItem(
     @Args('input') input: UpdateCartItemInput,
     @Context() context: any,
-    @CurrentUser() user: any,
+    @OptionalUser() user: any,
   ): Promise<Cart> {
     const userId = user?._id;
     const sessionId = this.getSessionId(context);
@@ -59,11 +59,11 @@ export class CartResolver {
 
   @Mutation(() => Cart, { name: 'removeFromCart' })
   @Public()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard)
   async removeFromCart(
     @Args('productId', { type: () => ID }) productId: string,
     @Context() context: any,
-    @CurrentUser() user: any,
+    @OptionalUser() user: any,
   ): Promise<Cart> {
     const userId = user?._id;
     const sessionId = this.getSessionId(context);
@@ -72,10 +72,10 @@ export class CartResolver {
 
   @Mutation(() => Cart, { name: 'clearCart' })
   @Public()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard)
   async clearCart(
     @Context() context: any,
-    @CurrentUser() user: any,
+    @OptionalUser() user: any,
   ): Promise<Cart> {
     const userId = user?._id;
     const sessionId = this.getSessionId(context);
@@ -84,11 +84,11 @@ export class CartResolver {
 
   @Mutation(() => Cart, { name: 'applyCoupon' })
   @Public()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard)
   async applyCoupon(
     @Args('code') code: string,
     @Context() context: any,
-    @CurrentUser() user: any,
+    @OptionalUser() user: any,
   ): Promise<Cart> {
     const userId = user?._id;
     const sessionId = this.getSessionId(context);
@@ -97,10 +97,10 @@ export class CartResolver {
 
   @Mutation(() => Cart, { name: 'removeCoupon' })
   @Public()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard)
   async removeCoupon(
     @Context() context: any,
-    @CurrentUser() user: any,
+    @OptionalUser() user: any,
   ): Promise<Cart> {
     const userId = user?._id;
     const sessionId = this.getSessionId(context);
