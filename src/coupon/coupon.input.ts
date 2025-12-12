@@ -1,5 +1,5 @@
 import { InputType, Field, Float, Int } from '@nestjs/graphql';
-import { DiscountType, EligibilityType, ApplicationScope } from './coupon.schema';
+import { DiscountType } from './coupon.schema';
 
 @InputType()
 export class CreateCouponInput {
@@ -32,12 +32,6 @@ export class CreateCouponInput {
 
   @Field({ nullable: true })
   isActive?: boolean;
-
-  @Field(() => EligibilityType, { nullable: true })
-  eligibilityType?: EligibilityType;
-
-  @Field(() => ApplicationScope, { nullable: true })
-  applicationScope?: ApplicationScope;
 
   @Field(() => Int, { nullable: true })
   usageLimit?: number;

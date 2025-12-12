@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Coupon, CouponDocument, DiscountType, EligibilityType } from './coupon.schema';
+import { Coupon, CouponDocument, DiscountType } from './coupon.schema';
 
 @Injectable()
 export class CouponService {
@@ -57,10 +57,8 @@ export class CouponService {
   }
 
   private validateEligibility(coupon: Coupon, cartTotal: number): void {
-    if (coupon.eligibilityType === EligibilityType.MINIMUM_VALUE) {
-      if (coupon.minCartValue && cartTotal < coupon.minCartValue) {
-        throw new BadRequestException(`Minimum cart value of ${coupon.minCartValue} required`);
-      }
+    if (coupon.minCartValue && cartTotal < coupon.minCartValue) {
+      throw new BadRequestException(`Minimum cart value of ${coupon.minCartValue} required`);
     }
   }
 

@@ -9,20 +9,7 @@ export enum DiscountType {
   FIXED = 'FIXED',
 }
 
-export enum EligibilityType {
-  MINIMUM_VALUE = 'MINIMUM_VALUE',
-  NO_MINIMUM = 'NO_MINIMUM',
-}
-
-export enum ApplicationScope {
-  ON_TOTAL_AMOUNT = 'ON_TOTAL_AMOUNT',
-  ON_PRODUCT_MRP = 'ON_PRODUCT_MRP',
-  ON_SUBTOTAL = 'ON_SUBTOTAL',
-}
-
 registerEnumType(DiscountType, { name: 'DiscountType' });
-registerEnumType(EligibilityType, { name: 'EligibilityType' });
-registerEnumType(ApplicationScope, { name: 'ApplicationScope' });
 
 @Schema({ timestamps: true })
 @ObjectType()
@@ -69,14 +56,6 @@ export class Coupon {
   @Prop({ default: true })
   @Field()
   isActive: boolean;
-
-  @Prop({ required: true, enum: EligibilityType, default: EligibilityType.NO_MINIMUM })
-  @Field(() => EligibilityType)
-  eligibilityType: EligibilityType;
-
-  @Prop({ required: true, enum: ApplicationScope, default: ApplicationScope.ON_TOTAL_AMOUNT })
-  @Field(() => ApplicationScope)
-  applicationScope: ApplicationScope;
 
   @Prop()
   @Field(() => Int, { nullable: true })
