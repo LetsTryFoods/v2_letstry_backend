@@ -148,8 +148,6 @@ type Coupon {
   startDate: DateTime!
   endDate: DateTime!
   isActive: Boolean!
-  eligibilityType: EligibilityType!
-  applicationScope: ApplicationScope!
   usageLimit: Int
   usageCount: Int!
   createdAt: DateTime!
@@ -159,17 +157,6 @@ type Coupon {
 enum DiscountType {
   PERCENTAGE
   FIXED
-}
-
-enum EligibilityType {
-  MINIMUM_VALUE
-  NO_MINIMUM
-}
-
-enum ApplicationScope {
-  ON_TOTAL_AMOUNT
-  ON_PRODUCT_MRP
-  ON_SUBTOTAL
 }
 
 type Charges {
@@ -566,8 +553,6 @@ input CreateCouponInput {
   startDate: DateTime!
   endDate: DateTime!
   isActive: Boolean
-  eligibilityType: EligibilityType
-  applicationScope: ApplicationScope
   usageLimit: Int
 }
 

@@ -10,7 +10,7 @@ import { ProductService } from '../product/product.service';
 import { WinstonLoggerService } from '../logger/logger.service';
 import { AddToCartInput, UpdateCartItemInput } from './cart.input';
 import { CouponService } from '../coupon/coupon.service';
-import { DiscountType, ApplicationScope } from '../coupon/coupon.schema';
+import { DiscountType } from '../coupon/coupon.schema';
 import { ChargesService } from '../charges/charges.service';
 
 @Injectable()
@@ -401,9 +401,6 @@ export class CartService {
     subtotal: number,
     items: CartItem[],
   ): number {
-    if (coupon.applicationScope === ApplicationScope.ON_PRODUCT_MRP) {
-      return items.reduce((sum, item) => sum + item.mrp * item.quantity, 0);
-    }
     return subtotal;
   }
 

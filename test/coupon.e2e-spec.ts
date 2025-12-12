@@ -74,8 +74,6 @@ describe('Coupon (e2e)', () => {
                 startDate: "${new Date().toISOString()}"
                 endDate: "${new Date(Date.now() + 86400000).toISOString()}"
                 isActive: true
-                eligibilityType: MINIMUM_VALUE
-                applicationScope: ON_TOTAL_AMOUNT
                 usageLimit: 100
               }) {
                 _id
@@ -106,8 +104,6 @@ describe('Coupon (e2e)', () => {
         startDate: new Date(),
         endDate: new Date(Date.now() + 86400000),
         isActive: true,
-        eligibilityType: "MINIMUM_VALUE",
-        applicationScope: "ON_TOTAL_AMOUNT",
         usageCount: 0,
         createdAt: new Date(),
         updatedAt: new Date()
