@@ -8,8 +8,11 @@ export class UserAuthResolver {
   constructor(private readonly userAuthService: UserAuthService) {}
 
   private getSessionId(context: any): string | undefined {
-    const cookie = context.req?.cookies?.guest_session;
-    return cookie?.sessionId;
+    const structuredCookie = context.req?.cookies?.guest_session;
+    if (structuredCookie?.sessionId) {
+      return structuredCookie.sessionId;
+    }
+    return context.req?.cookies?.sessionId;
   }
 
   @Mutation(() => String)

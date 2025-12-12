@@ -106,7 +106,6 @@ describe('Product (e2e)', () => {
   });
 
   const createTestVariant = (overrides = {}) => ({
-    _id: new Date().getTime().toString() + Math.random().toString(36).substr(2, 9),
     sku: `SKU${Math.random().toString(36).substr(2, 9)}`,
     name: '200g',
     price: 50,

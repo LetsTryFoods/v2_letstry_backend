@@ -26,15 +26,10 @@ export class ProductCommandService {
 
     const slug = await this.resolveSlug(input.name, input.slug);
 
-    const variantsWithIds = input.variants.map(v => ({
-      ...v,
-      _id: new Date().getTime().toString() + Math.random().toString(36).substr(2, 9),
-    }));
-
     const product = await this.repository.create({
       ...input,
       slug,
-      variants: variantsWithIds,
+      variants: input.variants,  // Let Mongoose generate ObjectIds automatically
     });
 
     await this.cacheInvalidator.invalidateProduct(product);

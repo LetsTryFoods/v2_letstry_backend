@@ -21,65 +21,86 @@ export class ProductImage {
   alt: string;
 }
 
+@Schema()
 @ObjectType()
 export class ProductVariant {
   @Field(() => ID)
   _id: string;
 
+  @Prop({ required: true })
   @Field()
   sku: string;
 
+  @Prop({ required: true })
   @Field()
   name: string;
 
+  @Prop({ required: true })
   @Field(() => Float)
   price: number;
 
+  @Prop({ required: true })
   @Field(() => Float)
   mrp: number;
 
+  @Prop({ required: true })
   @Field(() => Float)
   discountPercent: number;
 
+  @Prop({ required: true, default: 'product' })
   @Field()
   discountSource: string;
 
+  @Prop({ required: true })
   @Field(() => Float)
   weight: number;
 
+  @Prop({ required: true })
   @Field()
   weightUnit: string;
 
+  @Prop({ required: true })
   @Field()
   packageSize: string;
 
+  @Prop({ required: true })
   @Field(() => Float)
   length: number;
 
+  @Prop({ required: true })
   @Field(() => Float)
   height: number;
 
+  @Prop({ required: true })
   @Field(() => Float)
   breadth: number;
 
+  @Prop({ required: true, default: 0 })
   @Field(() => Int)
   stockQuantity: number;
 
+  @Prop({ required: true, default: 'in_stock' })
   @Field()
   availabilityStatus: string;
 
+  @Prop({ type: [{ url: String, alt: String }], required: true })
   @Field(() => [ProductImage])
   images: ProductImage[];
 
+  @Prop({ required: true })
   @Field()
   thumbnailUrl: string;
 
+  @Prop({ required: true, default: false })
   @Field()
   isDefault: boolean;
 
+  @Prop({ required: true, default: true })
   @Field()
   isActive: boolean;
 }
+
+export const ProductVariantSchema = SchemaFactory.createForClass(ProductVariant);
 
 @Schema({ timestamps: true })
 @ObjectType()
@@ -144,27 +165,7 @@ export class Product {
   isGlutenFree: boolean;
 
   @Prop({
-    type: [{
-      _id: { type: String, required: true },
-      sku: { type: String, required: true },
-      name: { type: String, required: true },
-      price: { type: Number, required: true },
-      mrp: { type: Number, required: true },
-      discountPercent: { type: Number, required: true },
-      discountSource: { type: String, required: true, default: 'product' },
-      weight: { type: Number, required: true },
-      weightUnit: { type: String, required: true },
-      packageSize: { type: String, required: true },
-      length: { type: Number, required: true },
-      height: { type: Number, required: true },
-      breadth: { type: Number, required: true },
-      stockQuantity: { type: Number, required: true, default: 0 },
-      availabilityStatus: { type: String, required: true, default: 'in_stock' },
-      images: { type: [{ url: String, alt: String }], required: true },
-      thumbnailUrl: { type: String, required: true },
-      isDefault: { type: Boolean, required: true, default: false },
-      isActive: { type: Boolean, required: true, default: true },
-    }],
+    type: [ProductVariantSchema],
     required: true,
   })
   @Field(() => [ProductVariant])
