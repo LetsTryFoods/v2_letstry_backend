@@ -25,4 +25,17 @@ export class CouponResolver {
   async getCoupon(@Args('code') code: string): Promise<Coupon> {
     return this.couponService.getCouponByCode(code);
   }
+
+  @Query(() => [Coupon], { name: 'coupons' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async getAllCoupons(): Promise<Coupon[]> {
+    return this.couponService.getAllCoupons();
+  }
+
+  @Query(() => [Coupon], { name: 'activeCoupons' })
+  @Public()
+  async getActiveCoupons(): Promise<Coupon[]> {
+    return this.couponService.getActiveCoupons();
+  }
 }

@@ -305,6 +305,8 @@ type Query {
   guestByGuestId(guestId: String!): Guest
   myCart: Cart
   coupon(code: String!): Coupon!
+  coupons: [Coupon!]!
+  activeCoupons: [Coupon!]!
   charges: Charges
   myAddresses: [Address!]!
   address(id: ID!): Address!
