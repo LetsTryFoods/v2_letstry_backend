@@ -67,4 +67,22 @@ export class CouponService {
   async incrementUsageCount(code: string): Promise<void> {
     await this.couponModel.updateOne({ code }, { $inc: { usageCount: 1 } });
   }
+
+  async getAllCoupons(): Promise<Coupon[]> {
+    return this.couponModel.find().sort({ createdAt: -1 }).exec();
+  }
+
+  async getActiveCoupons(): Promise<Coupon[]> {
+    const now = new Date();
+    return this.couponModel.find({
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+      $or: [
+        { usageLimit: { $exists: false } },
+        { usageLimit: null },
+        { $expr: { $lt: ['$usageCount', '$usageLimit'] } }
+      ]
+    }).sort({ createdAt: -1 }).exec();
+  }
 }
