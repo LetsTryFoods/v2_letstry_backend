@@ -2,11 +2,13 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { GuestService } from './guest.service';
 import { GuestResolver } from './guest.resolver';
-import { Guest, GuestSchema } from './guest.schema';
+import { Identity, IdentitySchema } from '../common/schemas/identity.schema';
+import { LoggerModule } from '../logger/logger.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Guest.name, schema: GuestSchema }]),
+    MongooseModule.forFeature([{ name: Identity.name, schema: IdentitySchema }]),
+    LoggerModule,
   ],
   providers: [GuestService, GuestResolver],
   exports: [GuestService],

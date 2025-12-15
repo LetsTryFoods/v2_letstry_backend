@@ -4,8 +4,8 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { AdminService } from './admin.service';
 import { AdminResolver } from './admin.resolver';
-import { AuthService } from './auth/auth.service';
-import { LocalStrategy } from './auth/local.strategy';
+import { AdminAuthService } from '../authentication/admin/admin-auth.service';
+import { AdminLocalStrategy } from '../authentication/admin/admin-local.strategy';
 import { Admin, AdminSchema } from './admin.schema';
 import { UserModule } from '../user/user.module';
 
@@ -20,9 +20,7 @@ import { UserModule } from '../user/user.module';
   providers: [
     AdminService,
     AdminResolver,
-    AuthService,
-    LocalStrategy,
   ],
-  exports: [AdminService, AuthService],
+  exports: [AdminService],
 })
 export class AdminModule {}

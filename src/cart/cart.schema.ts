@@ -85,13 +85,9 @@ export class Cart {
   @Field(() => ID)
   _id: string;
 
-  @Prop({ index: true })
-  @Field({ nullable: true })
-  userId?: string;
-
-  @Prop({ index: true })
-  @Field({ nullable: true })
-  sessionId?: string;
+  @Prop({ required: true, index: true })
+  @Field()
+  identityId: string;
 
   @Prop({ required: true, enum: CartStatus, default: CartStatus.ACTIVE })
   @Field(() => CartStatus)

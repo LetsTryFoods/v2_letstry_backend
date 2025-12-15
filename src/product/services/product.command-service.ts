@@ -19,13 +19,10 @@ export class ProductCommandService {
 
   async create(input: CreateProductInput): Promise<Product> {
     ProductVariantValidator.validateVariants(input.variants);
-
     for (const variant of input.variants) {
       await ProductVariantValidator.validateSkuUnique(this.repository, variant.sku);
     }
-
     const slug = await this.resolveSlug(input.name, input.slug);
-
     const product = await this.repository.create({
       ...input,
       slug,

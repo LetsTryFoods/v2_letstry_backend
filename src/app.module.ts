@@ -7,9 +7,8 @@ import { BannerModule } from './banner/banner.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PolicyModule } from './policy/policy.module';
 import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
-import { AuthModule } from './auth/auth.module';
-import { UserAuthModule } from './user-auth/user-auth.module';
+import { JwtAuthGuard } from './authentication/common/jwt-auth.guard';
+import { AuthenticationModule } from './authentication/authentication.module';
 import { RolesGuard } from './common/guards/roles.guard';
 import { AppCacheModule } from './cache/app-cache.module';
 import { CoreModule } from './core/core.module';
@@ -38,8 +37,7 @@ import { AddressModule } from './address/address.module';
     CouponModule,
     ChargesModule,
     AddressModule,
-    UserAuthModule,
-    AuthModule,
+    AuthenticationModule,
     AppCacheModule,
   ],
   controllers: [AppController],

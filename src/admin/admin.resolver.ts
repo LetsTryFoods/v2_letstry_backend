@@ -1,5 +1,5 @@
 import { Resolver, Mutation, Args, Context } from '@nestjs/graphql';
-import { AuthService } from './auth/auth.service';
+import { AdminAuthService } from '../authentication/admin/admin-auth.service';
 import { AdminService } from './admin.service';
 import { UnauthorizedException } from '@nestjs/common';
 import { Public } from '../common/decorators/public.decorator';
@@ -7,7 +7,7 @@ import { Public } from '../common/decorators/public.decorator';
 @Resolver()
 export class AdminResolver {
   constructor(
-    private authService: AuthService,
+    private authService: AdminAuthService,
     private adminService: AdminService,
   ) {}
 

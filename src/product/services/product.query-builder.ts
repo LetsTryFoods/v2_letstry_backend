@@ -26,7 +26,9 @@ export class ProductQueryBuilder {
   }
 
   withVariantId(variantId: string): this {
-    this.filter['variants._id'] = variantId;
+    this.filter.variants = {
+      $elemMatch: { _id: variantId },
+    };
     return this;
   }
 

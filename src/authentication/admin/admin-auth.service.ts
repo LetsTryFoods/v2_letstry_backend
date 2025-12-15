@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AdminService } from '../admin.service';
+import { AdminService } from '../../admin/admin.service';
 import { Role } from '../../common/enums/role.enum';
 
 @Injectable()
-export class AuthService {
+export class AdminAuthService {
   constructor(
     private adminService: AdminService,
     private jwtService: JwtService,

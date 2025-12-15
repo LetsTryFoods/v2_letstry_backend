@@ -3,7 +3,7 @@ import { UseGuards } from '@nestjs/common';
 import { AddressService } from './address.service';
 import { Address } from './address.schema';
 import { CreateAddressInput, UpdateAddressInput } from './address.input';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../authentication/common/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Resolver(() => Address)

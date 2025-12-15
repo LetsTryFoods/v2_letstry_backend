@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { Role } from '../common/enums/role.enum';
-import { AuthService as AdminAuthService } from '../admin/auth/auth.service';
-import { UserAuthService } from '../user-auth/user-auth.service';
-
+import { Role } from '../../common/enums/role.enum';
+import { AdminAuthService } from '../admin/admin-auth.service';
+import { UserAuthService } from '../user/user-auth.service';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -40,7 +39,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           return null;
       }
     } catch (error) {
-      // For optional authentication, don't throw errors
       return null;
     }
   }

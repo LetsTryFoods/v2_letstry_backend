@@ -12,41 +12,44 @@ import { AddToCartInput, UpdateCartItemInput } from './cart.input';
 import { CouponService } from '../coupon/coupon.service';
 import { DiscountType } from '../coupon/coupon.schema';
 import { ChargesService } from '../charges/charges.service';
+import { ConfigService } from '@nestjs/config';
+import { Identity, IdentityDocument } from '../common/schemas/identity.schema';
 
 @Injectable()
 export class CartService {
+  private readonly applyCouponOnMrp: boolean;
+
   constructor(
     @InjectModel(Cart.name) private cartModel: Model<CartDocument>,
+    @InjectModel(Identity.name) private identityModel: Model<IdentityDocument>,
     private readonly productService: ProductService,
     private readonly logger: WinstonLoggerService,
     private readonly couponService: CouponService,
     private readonly chargesService: ChargesService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.applyCouponOnMrp = this.configService.get<boolean>('cart.applyCouponOnMrp') || false;
+  }
 
-  async getCart(
-    userId?: string,
-    sessionId?: string,
-  ): Promise<CartDocument | null> {
-    const filter = this.getCartFilter(userId, sessionId);
-    if (!filter) return null;
-
-    this.logger.log('Fetching cart', { userId, sessionId }, 'CartModule');
-    return this.cartModel.findOne(filter).exec();
+  async getCart(identityId: string): Promise<CartDocument | null> {
+    this.logger.log('Fetching cart', { identityId }, 'CartModule');
+    return this.cartModel.findOne({ 
+      identityId, 
+      status: CartStatus.ACTIVE 
+    }).exec();
   }
 
   async addToCart(
-    userId: string | undefined,
-    sessionId: string | undefined,
+    identityId: string,
     input: AddToCartInput,
   ): Promise<CartDocument> {
-    this.validateUserIdentification(userId, sessionId);
     this.logger.log(
       'Adding to cart',
-      { userId, sessionId, input },
+      { identityId, input },
       'CartModule',
     );
 
-    const cart = await this.getOrCreateCart(userId, sessionId);
+    const cart = await this.getOrCreateCart(identityId);
     const { product, variantId } = await this.validateProductAvailability(input.productId);
     const newItem = this.createCartItem(
       product,
@@ -67,16 +70,15 @@ export class CartService {
   }
 
   async updateCartItem(
-    userId: string | undefined,
-    sessionId: string | undefined,
+    identityId: string,
     input: UpdateCartItemInput,
   ): Promise<CartDocument> {
     this.logger.log(
       'Updating cart item',
-      { userId, sessionId, input },
+      { identityId, input },
       'CartModule',
     );
-    const cart = await this.getCartOrThrow(userId, sessionId);
+    const cart = await this.getCartOrThrow(identityId);
 
     const itemIndex = this.findItemIndexInCart(cart.items, input.productId);
     if (itemIndex === -1) {
@@ -92,106 +94,89 @@ export class CartService {
     return this.saveAndRecalculateCart(cart);
   }
 
-  async mergeCarts(userId: string, sessionId: string): Promise<void> {
-    this.logger.log('Merging carts', { userId, sessionId }, 'CartModule');
+  async mergeCarts(guestIdentityId: string, userIdentityId: string): Promise<void> {
+    this.logger.log('Merging carts', { guestIdentityId, userIdentityId }, 'CartModule');
 
-    const guestCart = await this.findActiveGuestCart(sessionId);
+    const guestCart = await this.cartModel.findOne({
+      identityId: guestIdentityId,
+      status: CartStatus.ACTIVE
+    }).exec();
 
     if (!guestCart) {
-      this.logger.log('No guest cart to merge', { sessionId }, 'CartModule');
+      this.logger.log('No guest cart to merge', { guestIdentityId }, 'CartModule');
       return;
     }
 
     if (guestCart.items.length === 0) {
       this.logger.log(
         'Guest cart is empty, marking as merged',
-        { sessionId },
+        { guestIdentityId },
         'CartModule',
       );
       await this.markCartAsMerged(guestCart._id);
       return;
     }
 
-    const userCart = await this.findActiveUserCart(userId);
+    const userCart = await this.cartModel.findOne({
+      identityId: userIdentityId,
+      status: CartStatus.ACTIVE
+    }).exec();
 
     if (!userCart) {
-      await this.adoptGuestCartAsUserCart(guestCart, userId, sessionId);
+      await this.adoptGuestCartAsUserCart(guestCart, userIdentityId);
       return;
     }
 
     await this.mergeGuestItemsIntoUserCart(guestCart, userCart);
     await this.markCartAsMerged(guestCart._id);
 
-    this.logger.log('Carts merged successfully', { userId }, 'CartModule');
+    this.logger.log('Carts merged successfully', { userIdentityId }, 'CartModule');
   }
 
   async applyCoupon(
-    userId: string | undefined,
-    sessionId: string | undefined,
+    identityId: string,
     code: string,
   ): Promise<CartDocument> {
     this.logger.log(
       'Applying coupon',
-      { userId, sessionId, code },
+      { identityId, code },
       'CartModule',
     );
-    const cart = await this.getCartOrThrow(userId, sessionId);
+    const cart = await this.getCartOrThrow(identityId);
 
     await this.validateAndApplyCoupon(cart, code);
     return this.saveAndRecalculateCart(cart);
   }
 
-  async removeCoupon(
-    userId: string | undefined,
-    sessionId: string | undefined,
-  ): Promise<CartDocument> {
-    this.logger.log('Removing coupon', { userId, sessionId }, 'CartModule');
-    const cart = await this.getCartOrThrow(userId, sessionId);
+  async removeCoupon(identityId: string): Promise<CartDocument> {
+    this.logger.log('Removing coupon', { identityId }, 'CartModule');
+    const cart = await this.getCartOrThrow(identityId);
 
     cart.couponCode = undefined;
     return this.saveAndRecalculateCart(cart);
   }
 
   async removeFromCart(
-    userId: string | undefined,
-    sessionId: string | undefined,
+    identityId: string,
     productId: string,
   ): Promise<CartDocument> {
     this.logger.log(
       'Removing from cart',
-      { userId, sessionId, productId },
+      { identityId, productId },
       'CartModule',
     );
-    const cart = await this.getCartOrThrow(userId, sessionId);
+    const cart = await this.getCartOrThrow(identityId);
 
     cart.items = this.removeItemFromCart(cart.items, productId);
     return this.saveAndRecalculateCart(cart);
   }
 
-  async clearCart(userId?: string, sessionId?: string): Promise<CartDocument> {
-    this.logger.log('Clearing cart', { userId, sessionId }, 'CartModule');
-    const cart = await this.getCartOrThrow(userId, sessionId);
+  async clearCart(identityId: string): Promise<CartDocument> {
+    this.logger.log('Clearing cart', { identityId }, 'CartModule');
+    const cart = await this.getCartOrThrow(identityId);
 
     cart.items = [];
     return this.saveAndRecalculateCart(cart);
-  }
-
-  private async findActiveGuestCart(
-    sessionId: string,
-  ): Promise<CartDocument | null> {
-    return this.cartModel.findOne({
-      sessionId,
-      status: CartStatus.ACTIVE,
-    });
-  }
-
-  private async findActiveUserCart(
-    userId: string,
-  ): Promise<CartDocument | null> {
-    return this.cartModel.findOne({
-      userId,
-      status: CartStatus.ACTIVE,
-    });
   }
 
   private async markCartAsMerged(cartId: string): Promise<void> {
@@ -204,21 +189,18 @@ export class CartService {
 
   private async adoptGuestCartAsUserCart(
     guestCart: CartDocument,
-    userId: string,
-    sessionId: string,
+    userIdentityId: string,
   ): Promise<void> {
     this.logger.log(
       'No existing user cart, adopting guest cart',
-      { userId, sessionId },
+      { userIdentityId, guestCartId: guestCart._id },
       'CartModule',
     );
 
     const updated = await this.cartModel.findOneAndUpdate(
       { _id: guestCart._id, status: CartStatus.ACTIVE },
       {
-        userId,
-        sessionId: undefined,
-        $unset: { sessionId: 1 },
+        identityId: userIdentityId,
       },
       { new: true },
     );
@@ -226,7 +208,7 @@ export class CartService {
     if (!updated) {
       this.logger.warn(
         'Guest cart already merged by another process',
-        { sessionId },
+        { guestCartId: guestCart._id },
         'CartModule',
       );
     }
@@ -270,6 +252,7 @@ export class CartService {
   private async calculateDiscountAmount(
     cart: Cart,
     subtotal: number,
+    items: CartItem[],
   ): Promise<number> {
     if (!cart.couponCode) {
       return 0;
@@ -278,7 +261,7 @@ export class CartService {
     try {
       return await this.calculateDiscount(
         subtotal,
-        cart.items,
+        items,
         cart.couponCode,
       );
     } catch (error) {
@@ -310,10 +293,16 @@ export class CartService {
   }
 
   private async recalculateCart(cart: Cart): Promise<void> {
-    const subtotal = this.calculateSubtotal(cart.items);
-    const discountAmount = await this.calculateDiscountAmount(cart, subtotal);
+    const hasCoupon = !!cart.couponCode;
+    const useMrpForCalculation = this.applyCouponOnMrp && hasCoupon;
+    
+    const subtotal = useMrpForCalculation 
+      ? this.calculateMrpTotal(cart.items) 
+      : this.calculateSubtotal(cart.items);
+    
+    const discountAmount = await this.calculateDiscountAmount(cart, subtotal, cart.items);
     const handlingCharge = await this.getHandlingCharge();
-
+    
     const shippingCost = 0;
     const estimatedTax = 0;
     const grandTotal = this.calculateGrandTotal(
@@ -334,13 +323,8 @@ export class CartService {
     };
   }
 
-  private async getCartOrThrow(
-    userId?: string,
-    sessionId?: string,
-  ): Promise<CartDocument> {
-    this.validateUserIdentification(userId, sessionId);
-
-    const cart = await this.getCart(userId, sessionId);
+  private async getCartOrThrow(identityId: string): Promise<CartDocument> {
+    const cart = await this.getCart(identityId);
     if (!cart) {
       throw new NotFoundException('Cart not found');
     }
@@ -374,12 +358,6 @@ export class CartService {
     }
   }
 
-  private getCartFilter(userId?: string, sessionId?: string) {
-    if (userId) return { userId: userId, status: CartStatus.ACTIVE };
-    if (sessionId) return { sessionId: sessionId, status: CartStatus.ACTIVE };
-    return null;
-  }
-
   private findItemIndexInCart(items: CartItem[], productId: string): number {
     return items.findIndex((item) => item.productId.toString() === productId);
   }
@@ -391,6 +369,10 @@ export class CartService {
 
   private calculateSubtotal(items: CartItem[]): number {
     return items.reduce((sum, item) => sum + item.totalPrice, 0);
+  }
+
+  private calculateMrpTotal(items: CartItem[]): number {
+    return items.reduce((sum, item) => sum + (item.mrp * item.quantity), 0);
   }
 
   private removeItemFromCart(items: CartItem[], productId: string): CartItem[] {
@@ -480,35 +462,17 @@ export class CartService {
     }
   }
 
-  private validateUserIdentification(
-    userId?: string,
-    sessionId?: string,
-  ): void {
-    if (!userId && !sessionId) {
-      this.logger.error(
-        'Cannot perform cart operation without userId or sessionId',
-        {},
-        'CartModule',
-      );
-      throw new BadRequestException('User identification required');
-    }
-  }
-
-  private async getOrCreateCart(
-    userId?: string,
-    sessionId?: string,
-  ): Promise<CartDocument> {
-    let cart = await this.getCart(userId, sessionId);
+  private async getOrCreateCart(identityId: string): Promise<CartDocument> {
+    let cart = await this.getCart(identityId);
 
     if (!cart) {
       this.logger.log(
         'Cart not found, creating new one',
-        { userId, sessionId },
+        { identityId },
         'CartModule',
       );
       cart = new this.cartModel({
-        userId,
-        sessionId,
+        identityId,
         status: CartStatus.ACTIVE,
         items: [],
       });
@@ -663,11 +627,8 @@ export class CartService {
     }
   }
 
-  async validateAndCleanCart(
-    userId?: string,
-    sessionId?: string,
-  ): Promise<CartDocument | null> {
-    const cart = await this.getCart(userId, sessionId);
+  async validateAndCleanCart(identityId: string): Promise<CartDocument | null> {
+    const cart = await this.getCart(identityId);
     if (!cart || cart.items.length === 0) {
       return cart;
     }

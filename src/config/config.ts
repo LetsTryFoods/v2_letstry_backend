@@ -12,6 +12,7 @@ export default () => ({
     errorFile: process.env.ERROR_LOG_FILE || 'logs/error.log',
     debugFile: process.env.DEBUG_LOG_FILE || 'logs/debug.log',
     redisFile: process.env.REDIS_LOG_FILE || 'logs/redis.log',
+    guestConversionFile: process.env.GUEST_CONVERSION_LOG_FILE || 'logs/guest-conversion.log',
   },
   aws: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -30,5 +31,12 @@ export default () => ({
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     clientId: process.env.FIREBASE_CLIENT_ID,
     clientX509CertUrl: process.env.FIREBASE_CLIENT_X509_CERT_URL,
+  },
+  whatsapp: {
+    apiUrl: process.env.WHATSAPP_API_URL || 'https://nurenaiautomatic-b7hmdnb4fzbpbtbh.canadacentral-01.azurewebsites.net/webhook/send-template',
+    jwtToken: process.env.WHATSAPP_JWT_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkxldHNUcnkiLCJhZG1pbiI6dHJ1ZX0.gJvhuRhqKjVS_Gc0T87vjE9EAGKBzfx09SpJVpUcb1I',
+  },
+  cart: {
+    applyCouponOnMrp: process.env.APPLY_COUPON_ON_MRP === 'true',
   },
 });

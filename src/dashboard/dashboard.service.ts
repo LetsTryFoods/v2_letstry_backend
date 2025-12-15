@@ -5,7 +5,7 @@ import { Product, ProductDocument } from '../product/product.schema';
 import { Category, CategoryDocument } from '../category/category.schema';
 import { Banner, BannerDocument } from '../banner/banner.schema';
 import { Admin, AdminDocument } from '../admin/admin.schema';
-import { User, UserDocument } from '../user/user.schema';
+import { Identity, IdentityDocument, IdentityStatus } from '../common/schemas/identity.schema';
 import { DashboardStats } from './dashboard.schema';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class DashboardService {
     @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
     @InjectModel(Banner.name) private bannerModel: Model<BannerDocument>,
     @InjectModel(Admin.name) private adminModel: Model<AdminDocument>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Identity.name) private identityModel: Model<IdentityDocument>,
   ) {}
 
   async getStats(): Promise<DashboardStats> {
@@ -44,7 +44,11 @@ export class DashboardService {
       .countDocuments({ isActive: true })
       .exec();
     const totalAdmins = await this.adminModel.countDocuments().exec();
-    const totalUsers = await this.userModel.countDocuments().exec();
+    const totalUsers = await this.identityModel
+      .countDocuments({ 
+        status: { $in: [IdentityStatus.REGISTERED, IdentityStatus.VERIFIED, IdentityStatus.ACTIVE] }
+      })
+      .exec();
 
     return {
       totalProducts,

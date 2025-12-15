@@ -117,8 +117,7 @@ type CartTotals {
 
 type Cart {
   _id: ID!
-  userId: String
-  sessionId: String
+  identityId: String!
   status: CartStatus!
   couponCode: String
   shippingMethodId: String
@@ -342,6 +341,7 @@ type Mutation {
   updateAddress(id: ID!, input: UpdateAddressInput!): Address!
   deleteAddress(id: ID!): Address!
   sendOtp(phoneNumber: String!): String!
+  verifyWhatsAppOtp(phoneNumber: String!, otp: String!, input: CreateUserInput): String!
   verifyOtpAndLogin(idToken: String!, input: CreateUserInput): String!
 }
 
