@@ -21,6 +21,8 @@ import { CartModule } from './cart/cart.module';
 import { CouponModule } from './coupon/coupon.module';
 import { ChargesModule } from './charges/charges.module';
 import { AddressModule } from './address/address.module';
+import { ManufacturingAddressModule } from './manufacturing-address/manufacturing-address.module';
+import { SeoContentModule } from './seo-content/seo-content.module';
 
 
 @Module({
@@ -38,6 +40,8 @@ import { AddressModule } from './address/address.module';
     CouponModule,
     ChargesModule,
     AddressModule,
+    ManufacturingAddressModule,
+    SeoContentModule,
     UserAuthModule,
     AuthModule,
     AppCacheModule,

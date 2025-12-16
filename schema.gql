@@ -268,6 +268,54 @@ type Address {
   updatedAt: DateTime!
 }
 
+type ManufacturingAddress {
+  _id: ID!
+  batchCode: String!
+  addressHeading: String!
+  subAddressHeading: String!
+  fssaiLicenseNumber: String!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type PaginatedManufacturingAddresses {
+  items: [ManufacturingAddress!]!
+  meta: PaginationMeta!
+}
+
+type SeoContent {
+  _id: ID!
+  pageName: String!
+  pageSlug: String!
+  metaTitle: String!
+  metaDescription: String!
+  metaKeywords: String
+  canonicalUrl: String
+  ogTitle: String
+  ogDescription: String
+  ogImage: String
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type PaginatedSeoContents {
+  items: [SeoContent!]!
+  meta: PaginationMeta!
+}
+
+type SeoPage {
+  _id: ID!
+  slug: String!
+  label: String!
+  description: String
+  sortOrder: Float!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
 type Query {
   hello: String!
   products(pagination: PaginationInput! = {page: 1, limit: 10}, includeOutOfStock: Boolean! = false): PaginatedProducts!
@@ -297,6 +345,17 @@ type Query {
   charges: Charges
   myAddresses: [Address!]!
   address(id: ID!): Address!
+  manufacturingAddresses(pagination: PaginationInput! = {page: 1, limit: 10}): PaginatedManufacturingAddresses!
+  manufacturingAddress(id: ID!): ManufacturingAddress!
+  manufacturingAddressByBatchCode(batchCode: String!): ManufacturingAddress!
+  activeManufacturingAddresses: [ManufacturingAddress!]!
+  seoContents(pagination: PaginationInput! = {page: 1, limit: 10}): PaginatedSeoContents!
+  seoContent(id: ID!): SeoContent!
+  seoContentBySlug(slug: String!): SeoContent
+  activeSeoContents: [SeoContent!]!
+  seoPages: [SeoPage!]!
+  activeSeoPages: [SeoPage!]!
+  seoPage(id: ID!): SeoPage!
 }
 
 input PaginationInput {
@@ -341,6 +400,19 @@ type Mutation {
   createAddress(input: CreateAddressInput!): Address!
   updateAddress(id: ID!, input: UpdateAddressInput!): Address!
   deleteAddress(id: ID!): Address!
+  createManufacturingAddress(input: CreateManufacturingAddressInput!): ManufacturingAddress!
+  updateManufacturingAddress(id: ID!, input: UpdateManufacturingAddressInput!): ManufacturingAddress!
+  deleteManufacturingAddress(id: ID!): ManufacturingAddress!
+  toggleManufacturingAddressActive(id: ID!): ManufacturingAddress!
+  createSeoContent(input: CreateSeoContentInput!): SeoContent!
+  updateSeoContent(id: ID!, input: UpdateSeoContentInput!): SeoContent!
+  deleteSeoContent(id: ID!): Boolean!
+  toggleSeoContentActive(id: ID!): SeoContent!
+  upsertSeoContents(inputs: [CreateSeoContentInput!]!): [SeoContent!]!
+  createSeoPage(input: CreateSeoPageInput!): SeoPage!
+  updateSeoPage(id: ID!, input: UpdateSeoPageInput!): SeoPage!
+  deleteSeoPage(id: ID!): Boolean!
+  toggleSeoPageActive(id: ID!): SeoPage!
   sendOtp(phoneNumber: String!): String!
   verifyOtpAndLogin(idToken: String!, input: CreateUserInput): String!
 }
@@ -587,6 +659,64 @@ input UpdateAddressInput {
   addressCountry: String
   telephone: String
   isDefault: Boolean
+}
+
+input CreateManufacturingAddressInput {
+  batchCode: String!
+  addressHeading: String!
+  subAddressHeading: String!
+  fssaiLicenseNumber: String!
+  isActive: Boolean = true
+}
+
+input UpdateManufacturingAddressInput {
+  batchCode: String
+  addressHeading: String
+  subAddressHeading: String
+  fssaiLicenseNumber: String
+  isActive: Boolean
+}
+
+input CreateSeoContentInput {
+  pageName: String!
+  pageSlug: String!
+  metaTitle: String!
+  metaDescription: String!
+  metaKeywords: String
+  canonicalUrl: String
+  ogTitle: String
+  ogDescription: String
+  ogImage: String
+  isActive: Boolean = true
+}
+
+input UpdateSeoContentInput {
+  pageName: String
+  pageSlug: String
+  metaTitle: String
+  metaDescription: String
+  metaKeywords: String
+  canonicalUrl: String
+  ogTitle: String
+  ogDescription: String
+  ogImage: String
+  isActive: Boolean
+}
+
+input CreateSeoPageInput {
+  slug: String!
+  label: String!
+  description: String
+  sortOrder: Int = 0
+  isActive: Boolean = true
+}
+
+input UpdateSeoPageInput {
+  slug: String
+  label: String
+  description: String
+  sortOrder: Int
+  isActive: Boolean
 }
 
 input CreateUserInput {
