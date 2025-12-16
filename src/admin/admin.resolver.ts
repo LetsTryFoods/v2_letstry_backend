@@ -26,8 +26,9 @@ export class AdminResolver {
     context.res.cookie('access_token', token.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
       maxAge: 60 * 60 * 1000,
+      domain: process.env.NODE_ENV === 'production' ? '.krsna.site' : undefined,
     });
     return token.access_token;
   }

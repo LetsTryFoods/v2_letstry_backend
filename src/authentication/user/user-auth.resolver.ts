@@ -46,7 +46,19 @@ export class UserAuthResolver {
     @Args('input', { nullable: true }) input?: CreateUserInput,
   ): Promise<string> {
     const sessionId = this.getSessionId(context);
-    return this.userAuthService.verifyWhatsAppOtp(phoneNumber, otp, input, sessionId);
+    const token = await this.userAuthService.verifyWhatsAppOtp(phoneNumber, otp, input, sessionId);
+    
+    if (context.res) {
+      context.res.cookie('access_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        domain: process.env.NODE_ENV === 'production' ? '.krsna.site' : undefined,
+      });
+    }
+    
+    return token;
   }
 
   @Mutation(() => String)
@@ -57,6 +69,18 @@ export class UserAuthResolver {
     @Args('input', { nullable: true }) input?: CreateUserInput,
   ): Promise<string> {
     const sessionId = this.getSessionId(context);
-    return this.userAuthService.verifyOtpAndLogin(idToken, input, sessionId);
+    const token = await this.userAuthService.verifyOtpAndLogin(idToken, input, sessionId);
+    
+    if (context.res) {
+      context.res.cookie('access_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        domain: process.env.NODE_ENV === 'production' ? '.krsna.site' : undefined,
+      });
+    }
+    
+    return token;
   }
 }

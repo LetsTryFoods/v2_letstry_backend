@@ -43,7 +43,8 @@ export class GuestResolver {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 360 * 24 * 60 * 60 * 1000,
-        sameSite: 'lax',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        domain: process.env.NODE_ENV === 'production' ? '.krsna.site' : undefined,
       });
       this.logger.log('Resolver: guest_session cookie set', { guestId: guest.guestId }, 'GuestModule');
     }
