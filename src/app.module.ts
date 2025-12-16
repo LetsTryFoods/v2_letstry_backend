@@ -23,6 +23,7 @@ import { ChargesModule } from './charges/charges.module';
 import { AddressModule } from './address/address.module';
 import { ManufacturingAddressModule } from './manufacturing-address/manufacturing-address.module';
 import { SeoContentModule } from './seo-content/seo-content.module';
+import { RbacModule } from './rbac/rbac.module';
 
 
 @Module({
@@ -42,6 +43,7 @@ import { SeoContentModule } from './seo-content/seo-content.module';
     AddressModule,
     ManufacturingAddressModule,
     SeoContentModule,
+    RbacModule,
     UserAuthModule,
     AuthModule,
     AppCacheModule,

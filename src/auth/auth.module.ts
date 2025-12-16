@@ -8,6 +8,7 @@ import { AdminModule } from '../admin/admin.module';
 import { UserModule } from '../user/user.module';
 import { FirebaseModule } from '../firebase/firebase.module';
 import { UserAuthModule } from '../user-auth/user-auth.module';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Global()
 @Module({
@@ -25,6 +26,7 @@ import { UserAuthModule } from '../user-auth/user-auth.module';
     UserModule,
     FirebaseModule,
     UserAuthModule,
+    RbacModule,
   ],
   providers: [JwtStrategy, JwtAuthGuard],
   exports: [JwtAuthGuard, JwtModule],

@@ -169,6 +169,60 @@ type Charges {
   deliveryRestBelowThreshold: Float!
 }
 
+type Permission {
+  _id: ID!
+  slug: String!
+  name: String!
+  description: String
+  module: String!
+  sortOrder: Float!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type RolePermissionType {
+  permission: ID!
+  actions: [String!]!
+}
+
+type RolePermissionPopulated {
+  permission: Permission!
+  actions: [String!]!
+}
+
+type AdminRolePopulated {
+  _id: ID!
+  name: String!
+  slug: String!
+  description: String
+  permissions: [RolePermissionPopulated!]!
+  isSystem: Boolean!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type AdminUserPopulated {
+  _id: ID!
+  name: String!
+  email: String!
+  phone: String
+  avatar: String
+  role: AdminRolePopulated!
+  isActive: Boolean!
+  lastLoginAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type AdminPermissionDetail {
+  slug: String!
+  name: String!
+  module: String!
+  actions: [String!]!
+}
+
 type Product {
   _id: ID!
   name: String!
@@ -239,6 +293,45 @@ type PaginatedProducts {
 type PaginatedCategories {
   items: [Category!]!
   meta: PaginationMeta!
+}
+
+type AdminRolePagination {
+  items: [AdminRolePopulated!]!
+  meta: PaginationMeta!
+}
+
+type AdminUserPagination {
+  items: [AdminUserPopulated!]!
+  meta: PaginationMeta!
+}
+
+type AdminAuthResponse {
+  accessToken: String!
+  _id: String!
+  name: String!
+  email: String!
+  roleName: String!
+  roleSlug: String!
+  permissions: [AdminPermissionResponse!]!
+}
+
+type AdminPermissionResponse {
+  slug: String!
+  name: String!
+  module: String!
+  actions: [String!]!
+}
+
+type AdminMeResponse {
+  _id: String!
+  name: String!
+  email: String!
+  phone: String
+  avatar: String
+  roleName: String!
+  roleSlug: String!
+  permissions: [AdminPermissionResponse!]!
+  isActive: Boolean!
 }
 
 type Guest {
@@ -356,6 +449,16 @@ type Query {
   seoPages: [SeoPage!]!
   activeSeoPages: [SeoPage!]!
   seoPage(id: ID!): SeoPage!
+  permissions: [Permission!]!
+  activePermissions: [Permission!]!
+  permission(id: String!): Permission
+  permissionModules: [String!]!
+  adminRoles(page: Int! = 1, limit: Int! = 10): AdminRolePagination!
+  activeAdminRoles: [AdminRolePopulated!]!
+  adminRole(id: String!): AdminRolePopulated
+  adminUsers(page: Int! = 1, limit: Int! = 10): AdminUserPagination!
+  adminUser(id: String!): AdminUserPopulated
+  adminMe: AdminMeResponse
 }
 
 input PaginationInput {
@@ -413,6 +516,21 @@ type Mutation {
   updateSeoPage(id: ID!, input: UpdateSeoPageInput!): SeoPage!
   deleteSeoPage(id: ID!): Boolean!
   toggleSeoPageActive(id: ID!): SeoPage!
+  createPermission(input: CreatePermissionInput!): Permission!
+  updatePermission(id: String!, input: UpdatePermissionInput!): Permission
+  deletePermission(id: String!): Boolean!
+  togglePermissionActive(id: String!): Permission
+  createAdminRole(input: CreateAdminRoleInput!): AdminRolePopulated!
+  updateAdminRole(id: String!, input: UpdateAdminRoleInput!): AdminRolePopulated
+  deleteAdminRole(id: String!): Boolean!
+  toggleAdminRoleActive(id: String!): AdminRolePopulated
+  createAdminUser(input: CreateAdminUserInput!): AdminUserPopulated!
+  updateAdminUser(id: String!, input: UpdateAdminUserInput!): AdminUserPopulated
+  deleteAdminUser(id: String!): Boolean!
+  toggleAdminUserActive(id: String!): AdminUserPopulated
+  adminUserLogin(input: AdminLoginInput!): AdminAuthResponse!
+  changeAdminPassword(input: ChangePasswordInput!): Boolean!
+  adminLogout: Boolean!
   sendOtp(phoneNumber: String!): String!
   verifyOtpAndLogin(idToken: String!, input: CreateUserInput): String!
 }
@@ -717,6 +835,75 @@ input UpdateSeoPageInput {
   description: String
   sortOrder: Int
   isActive: Boolean
+}
+
+input CreatePermissionInput {
+  slug: String!
+  name: String!
+  description: String
+  module: String!
+  sortOrder: Float
+  isActive: Boolean
+}
+
+input UpdatePermissionInput {
+  slug: String
+  name: String
+  description: String
+  module: String
+  sortOrder: Float
+  isActive: Boolean
+}
+
+input CreateAdminRoleInput {
+  name: String!
+  slug: String!
+  description: String
+  permissions: [RolePermissionInput!]
+  isActive: Boolean
+}
+
+input RolePermissionInput {
+  permission: ID!
+  actions: [String!]!
+}
+
+input UpdateAdminRoleInput {
+  name: String
+  slug: String
+  description: String
+  permissions: [RolePermissionInput!]
+  isActive: Boolean
+}
+
+input CreateAdminUserInput {
+  name: String!
+  email: String!
+  password: String!
+  phone: String
+  avatar: String
+  role: ID!
+  isActive: Boolean
+}
+
+input UpdateAdminUserInput {
+  name: String
+  email: String
+  password: String
+  phone: String
+  avatar: String
+  role: ID
+  isActive: Boolean
+}
+
+input AdminLoginInput {
+  email: String!
+  password: String!
+}
+
+input ChangePasswordInput {
+  currentPassword: String!
+  newPassword: String!
 }
 
 input CreateUserInput {
