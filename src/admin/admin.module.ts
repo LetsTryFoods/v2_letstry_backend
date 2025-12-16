@@ -13,14 +13,9 @@ import { UserModule } from '../user/user.module';
   imports: [
     MongooseModule.forFeature([{ name: Admin.name, schema: AdminSchema }]),
     PassportModule,
-    MongooseModule.forFeature([{ name: Admin.name, schema: AdminSchema }]),
-    PassportModule,
     UserModule,
   ],
-  providers: [
-    AdminService,
-    AdminResolver,
-  ],
+  providers: [AdminService, AdminResolver],
   exports: [AdminService],
 })
 export class AdminModule {}

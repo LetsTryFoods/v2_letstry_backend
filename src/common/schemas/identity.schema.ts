@@ -1,6 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { ObjectType, Field, ID, GraphQLISODateTime, registerEnumType } from '@nestjs/graphql';
+import {
+  ObjectType,
+  Field,
+  ID,
+  GraphQLISODateTime,
+  registerEnumType,
+} from '@nestjs/graphql';
 import GraphQLJSON from 'graphql-type-json';
 
 export type IdentityDocument = Identity & Document;
@@ -24,15 +30,19 @@ export class Identity {
   @Field(() => ID)
   _id: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   @Field()
   identityId: string;
 
-  @Prop({ type: String, enum: Object.values(IdentityStatus), default: IdentityStatus.GUEST })
+  @Prop({
+    type: String,
+    enum: Object.values(IdentityStatus),
+    default: IdentityStatus.GUEST,
+  })
   @Field(() => IdentityStatus)
   status: IdentityStatus;
 
-  @Prop({ sparse: true, unique: true })
+  @Prop({ sparse: true })
   @Field({ nullable: true })
   phoneNumber?: string;
 
@@ -44,7 +54,7 @@ export class Identity {
   @Field({ nullable: true })
   lastName?: string;
 
-  @Prop({ unique: true, sparse: true })
+  @Prop({ sparse: true })
   @Field({ nullable: true })
   email?: string;
 
@@ -121,9 +131,9 @@ export class Identity {
 
 export const IdentitySchema = SchemaFactory.createForClass(Identity);
 
-IdentitySchema.index({ identityId: 1 });
-IdentitySchema.index({ phoneNumber: 1 });
+IdentitySchema.index({ identityId: 1 }, { unique: true });
+IdentitySchema.index({ phoneNumber: 1 }, { unique: true, sparse: true });
 IdentitySchema.index({ currentSessionId: 1 });
 IdentitySchema.index({ sessionIds: 1 });
 IdentitySchema.index({ status: 1 });
-IdentitySchema.index({ email: 1 });
+IdentitySchema.index({ email: 1 }, { unique: true, sparse: true });

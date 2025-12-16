@@ -1,6 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { ObjectType, Field, ID, Float, Int, registerEnumType } from '@nestjs/graphql';
+import {
+  ObjectType,
+  Field,
+  ID,
+  Float,
+  Int,
+  registerEnumType,
+} from '@nestjs/graphql';
 import GraphQLJSON from 'graphql-type-json';
 
 export type CartDocument = Cart & Document;
@@ -85,7 +92,7 @@ export class Cart {
   @Field(() => ID)
   _id: string;
 
-  @Prop({ required: true, index: true })
+  @Prop({ required: true })
   @Field()
   identityId: string;
 
@@ -105,7 +112,17 @@ export class Cart {
   @Field({ nullable: true })
   expiresAt?: Date;
 
-  @Prop({ type: Object, default: { subtotal: 0, discountAmount: 0, shippingCost: 0, estimatedTax: 0, handlingCharge: 0, grandTotal: 0 } })
+  @Prop({
+    type: Object,
+    default: {
+      subtotal: 0,
+      discountAmount: 0,
+      shippingCost: 0,
+      estimatedTax: 0,
+      handlingCharge: 0,
+      grandTotal: 0,
+    },
+  })
   @Field(() => CartTotals)
   totalsSummary: CartTotals;
 
@@ -121,3 +138,5 @@ export class Cart {
 }
 
 export const CartSchema = SchemaFactory.createForClass(Cart);
+
+CartSchema.index({ identityId: 1 });

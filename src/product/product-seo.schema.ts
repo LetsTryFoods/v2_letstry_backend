@@ -1,11 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import {
-  ObjectType,
-  Field,
-  ID,
-  GraphQLISODateTime,
-} from '@nestjs/graphql';
+import { ObjectType, Field, ID, GraphQLISODateTime } from '@nestjs/graphql';
 
 export type ProductSeoDocument = ProductSeo & Document;
 
@@ -15,7 +10,7 @@ export class ProductSeo {
   @Field(() => ID)
   _id: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   @Field()
   productId: string;
 

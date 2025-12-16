@@ -80,7 +80,7 @@ export class WinstonLoggerService implements LoggerService {
         }),
         new winston.transports.File({
           filename: path.resolve(logConfig.redisFile),
-          level: 'info', 
+          level: 'info',
           format: winston.format.combine(
             winston.format((info) => {
               return info.context === 'Redis' ? info : false;
@@ -90,39 +90,57 @@ export class WinstonLoggerService implements LoggerService {
             winston.format.json(),
           ),
         }),
-        ...['product', 'category', 'banner', 'policy'].map((module) => 
-          new winston.transports.File({
-            filename: path.resolve(`logs/redis-${module}.log`),
-            level: 'info',
-            format: winston.format.combine(
-              winston.format((info) => {
-                const key = info.key || (info.message && typeof info.message === 'object' && (info.message as any)['key']);
-                
-                if (info.context === 'Redis' && typeof key === 'string' && key.startsWith(`${module}:`)) {
-                  return info;
-                }
-                return false;
-              })(),
-              winston.format.timestamp(),
-              winston.format.errors({ stack: true }),
-              winston.format.json(),
-            ),
-          })
+        ...['product', 'category', 'banner', 'policy'].map(
+          (module) =>
+            new winston.transports.File({
+              filename: path.resolve(`logs/redis-${module}.log`),
+              level: 'info',
+              format: winston.format.combine(
+                winston.format((info) => {
+                  const key =
+                    info.key ||
+                    (info.message &&
+                      typeof info.message === 'object' &&
+                      (info.message as any)['key']);
+
+                  if (
+                    info.context === 'Redis' &&
+                    typeof key === 'string' &&
+                    key.startsWith(`${module}:`)
+                  ) {
+                    return info;
+                  }
+                  return false;
+                })(),
+                winston.format.timestamp(),
+                winston.format.errors({ stack: true }),
+                winston.format.json(),
+              ),
+            }),
         ),
         new winston.transports.Console({
           format: winston.format.combine(
             winston.format.colorize(),
             winston.format.timestamp(),
-            winston.format.printf(({ timestamp, level, message, context, ...meta }) => {
-              const ctx = context ? `[${context}] ` : '';
-              const msg = typeof message === 'object' ? JSON.stringify(message, null, 2) : message;
-              const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
-              return `${timestamp} ${level}: ${ctx}${msg} ${metaStr}`;
-            }),
+            winston.format.printf(
+              ({ timestamp, level, message, context, ...meta }) => {
+                const ctx = context ? `[${context}] ` : '';
+                const msg =
+                  typeof message === 'object'
+                    ? JSON.stringify(message, null, 2)
+                    : message;
+                const metaStr = Object.keys(meta).length
+                  ? JSON.stringify(meta)
+                  : '';
+                return `${timestamp} ${level}: ${ctx}${msg} ${metaStr}`;
+              },
+            ),
           ),
         }),
       ],
     });
+
+    this.logger.setMaxListeners(20);
   }
 
   log(message: any, ...optionalParams: any[]) {
