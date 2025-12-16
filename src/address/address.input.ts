@@ -1,22 +1,42 @@
-import { InputType, Field } from '@nestjs/graphql';
-import { IsNotEmpty, IsString, IsOptional, IsBoolean } from 'class-validator';
+import { InputType, Field, Float } from '@nestjs/graphql';
+import { IsNotEmpty, IsString, IsOptional, IsBoolean, IsNumber } from 'class-validator';
 
 @InputType()
 export class CreateAddressInput {
   @Field()
   @IsNotEmpty()
   @IsString()
-  name: string;
+  addressType: string;
 
   @Field()
   @IsNotEmpty()
   @IsString()
-  streetAddress: string;
+  recipientPhone: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  recipientName: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  buildingName: string;
 
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  extendedAddress?: string;
+  floor?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  streetArea?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  landmark?: string;
 
   @Field()
   @IsNotEmpty()
@@ -38,15 +58,30 @@ export class CreateAddressInput {
   @IsString()
   addressCountry: string;
 
-  @Field()
-  @IsNotEmpty()
-  @IsString()
-  telephone: string;
-
   @Field({ nullable: true })
   @IsOptional()
   @IsBoolean()
   isDefault?: boolean;
+
+  @Field(() => Float)
+  @IsNotEmpty()
+  @IsNumber()
+  latitude: number;
+
+  @Field(() => Float)
+  @IsNotEmpty()
+  @IsNumber()
+  longitude: number;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  formattedAddress: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  placeId?: string;
 }
 
 @InputType()
@@ -54,17 +89,37 @@ export class UpdateAddressInput {
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  name?: string;
+  addressType?: string;
 
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  streetAddress?: string;
+  recipientPhone?: string;
 
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  extendedAddress?: string;
+  recipientName?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  buildingName?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  floor?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  streetArea?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  landmark?: string;
 
   @Field({ nullable: true })
   @IsOptional()
@@ -88,11 +143,71 @@ export class UpdateAddressInput {
 
   @Field({ nullable: true })
   @IsOptional()
-  @IsString()
-  telephone?: string;
+  @IsBoolean()
+  isDefault?: boolean;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  latitude?: number;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  longitude?: number;
 
   @Field({ nullable: true })
   @IsOptional()
-  @IsBoolean()
-  isDefault?: boolean;
+  @IsString()
+  formattedAddress?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  placeId?: string;
+}
+
+@InputType()
+export class GeocodeAddressInput {
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  address: string;
+}
+
+@InputType()
+export class ReverseGeocodeInput {
+  @Field()
+  @IsNotEmpty()
+  latitude: number;
+
+  @Field()
+  @IsNotEmpty()
+  longitude: number;
+}
+
+@InputType()
+export class SearchPlacesInput {
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  query: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  sessionToken?: string;
+}
+
+@InputType()
+export class PlaceDetailsInput {
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  placeId: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  sessionToken?: string;
 }

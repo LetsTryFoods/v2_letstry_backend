@@ -39,4 +39,31 @@ export default () => ({
   cart: {
     applyCouponOnMrp: process.env.APPLY_COUPON_ON_MRP === 'true',
   },
+  googleMaps: {
+    apiKey: process.env.GOOGLE_MAPS_API_KEY,
+    apiSecret: process.env.GOOGLE_MAPS_API_SECRET,
+  },
+  payment: {
+    gateway: process.env.PAYMENT_GATEWAY || 'ZAAKPAY',
+  },
+  zaakpay: {
+    merchantIdentifier: process.env.ZAAKPAY_MERCHANT_IDENTIFIER || 'ec1aef36b2074f3790e193627ee7c7ca',
+    encryptionKeyId: process.env.ZAAKPAY_ENCRYPTION_KEY_ID || '9TodiedMJgabjBU',
+    publicKey: process.env.ZAAKPAY_PUBLIC_KEY || 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1m2fmIoRqDlF2ntbQAYSMGfiyy5wAWUeiBC9oAWoKkSWypudfDT9oz46G7sbdPSvxtszkd1Vjux0hkhac+gNNbWjT8f5JLcj8a0cXFqsmcL5WKQD47/48r9UP8rMTftrOcU8avsSkLaoGOGa+QOEmVduGBXQpM9WenbGAZtoxj6fK8+x77BLOCSEeqrY8s+sBMxne6UFxLbakASzXA3SZ+IxeU0pS3CnvjUh2zJRFkSlV4gBxD5jYAB2oZPsjSrDXhQ8fLxpg7g0pHfB+bcebOLvgEVw2CW1Tla/sih8FuPwxPth1TVKe0VXPjox3dG7ZSYMrh3v21KjaGC7HeZTKQIDAQAB',
+    secretKey: process.env.ZAAKPAY_SECRET_KEY || 'a3833da3c2234d218568a690c1714e5d',
+    returnUrl: process.env.ZAAKPAY_RETURN_URL || 'http://localhost:3000/payment/callback',
+    environment: process.env.ZAAKPAY_ENVIRONMENT || 'staging',
+    baseUrl: {
+      staging: 'https://zaakstaging.zaakpay.com',
+      production: 'https://api.zaakpay.com',
+    },
+    endpoints: {
+      expressCheckout: '/api/paymentTransact/V8',
+      customCheckout: '/transactU?v=8',
+      validateCard: '/validateCard',
+      checkTxn: '/checkTxn?v=5',
+      refund: '/refund',
+      settlementReport: '/settlement',
+    },
+  },
 });

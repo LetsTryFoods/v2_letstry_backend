@@ -8,6 +8,7 @@ import { UserAuthResolver } from './user-auth.resolver';
 import { IdentityModule } from '../../identity/identity.module';
 import { CartModule } from '../../cart/cart.module';
 import { WhatsAppModule } from '../../whatsapp/whatsapp.module';
+import { AddressModule } from '../../address/address.module';
 import { OtpService } from './otp.service';
 import { Otp, OtpSchema } from './otp.schema';
 import { Identity, IdentitySchema } from '../../common/schemas/identity.schema';
@@ -20,6 +21,7 @@ import { LoggerModule } from '../../logger/logger.module';
     IdentityModule,
     CartModule,
     WhatsAppModule,
+    AddressModule,
     LoggerModule,
     MongooseModule.forFeature([
       { name: Otp.name, schema: OtpSchema },

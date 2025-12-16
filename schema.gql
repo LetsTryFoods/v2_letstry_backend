@@ -168,6 +168,29 @@ type Charges {
   deliveryRestBelowThreshold: Float!
 }
 
+type Address {
+  _id: ID!
+  identityId: ID!
+  addressType: String!
+  recipientPhone: String!
+  recipientName: String!
+  buildingName: String!
+  floor: String
+  streetArea: String
+  landmark: String
+  addressLocality: String!
+  addressRegion: String!
+  postalCode: String!
+  addressCountry: String!
+  isDefault: Boolean!
+  latitude: Float!
+  longitude: Float!
+  formattedAddress: String!
+  placeId: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
 type Product {
   _id: ID!
   name: String!
@@ -240,6 +263,43 @@ type PaginatedCategories {
   meta: PaginationMeta!
 }
 
+type GoogleMapsAddressOutput {
+  formattedAddress: String!
+  streetAddress: String
+  extendedAddress: String
+  locality: String
+  region: String
+  postalCode: String
+  country: String
+  latitude: Float!
+  longitude: Float!
+}
+
+type PlacePredictionOutput {
+  placeId: String!
+  description: String!
+  mainText: String!
+  secondaryText: String!
+}
+
+type PlaceDetailsOutput {
+  placeId: String!
+  formattedAddress: String!
+  streetAddress: String
+  locality: String
+  region: String
+  postalCode: String
+  country: String
+  latitude: Float!
+  longitude: Float!
+}
+
+type PhoneCheckOutput {
+  exists: Boolean!
+  requiresLogin: Boolean!
+  message: String
+}
+
 type Guest {
   _id: ID!
   guestId: String!
@@ -251,20 +311,125 @@ type Guest {
   convertedToUserId: ID
 }
 
-type Address {
-  _id: ID!
-  userId: ID!
-  name: String!
-  streetAddress: String!
-  extendedAddress: String
-  addressLocality: String!
-  addressRegion: String!
-  postalCode: String!
-  addressCountry: String!
-  telephone: String!
-  isDefault: Boolean!
+type PaymentOrderType {
+  _id: String!
+  paymentOrderId: String!
+  paymentEventId: String!
+  identityId: String!
+  orderId: String
+  amount: String!
+  currency: String!
+  paymentOrderStatus: PaymentStatus!
+  paymentMethod: PaymentMethod
+  zaakpayTxnId: String
+  zaakpayOrderId: String
+  zaakpayToken: String
+  pspResponseMessage: String
+  failureReason: String
+  executedAt: DateTime
+  completedAt: DateTime
   createdAt: DateTime!
   updatedAt: DateTime!
+}
+
+enum PaymentStatus {
+  NOT_STARTED
+  EXECUTING
+  SUCCESS
+  FAILED
+  PENDING
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  NET_BANKING
+  UPI
+  WALLET
+}
+
+type ChecksumDataType {
+  amount: String!
+  merchantIdentifier: String!
+  orderId: String!
+  returnUrl: String!
+  buyerEmail: String!
+  buyerFirstName: String!
+  buyerPhoneNumber: String!
+  currency: String!
+  txnType: String!
+  zpPayOption: String!
+  mode: String!
+  productDescription: String!
+  txnDate: String!
+  checksum: String!
+}
+
+type InitiatePaymentResponse {
+  paymentOrderId: String!
+  checkoutUrl: String!
+  checksumData: ChecksumDataType!
+}
+
+type PaymentStatusResponse {
+  paymentOrderId: String!
+  status: PaymentStatus!
+  message: String
+  paymentOrder: PaymentOrderType!
+}
+
+type RefundResponse {
+  refundId: String!
+  status: PaymentStatus!
+  message: String
+}
+
+type OrderItemType {
+  productId: String!
+  quantity: Float!
+  price: String!
+  totalPrice: String!
+  name: String!
+  sku: String!
+}
+
+type OrderType {
+  _id: String!
+  orderId: String!
+  identityId: String!
+  paymentOrderId: String!
+  cartId: String!
+  totalAmount: String!
+  currency: String!
+  orderStatus: OrderStatus!
+  shippingAddressId: String
+  items: [OrderItemType!]!
+  deliveredAt: DateTime
+  cancelledAt: DateTime
+  trackingNumber: String
+  cancellationReason: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+type PaginatedOrdersResponse {
+  orders: [OrderType!]!
+  total: Float!
+  page: Float!
+  limit: Float!
+  totalPages: Float!
 }
 
 type Query {
@@ -296,11 +461,46 @@ type Query {
   charges: Charges
   myAddresses: [Address!]!
   address(id: ID!): Address!
+  geocodeAddress(input: GeocodeAddressInput!): GoogleMapsAddressOutput!
+  reverseGeocode(input: ReverseGeocodeInput!): GoogleMapsAddressOutput!
+  searchPlaces(input: SearchPlacesInput!): [PlacePredictionOutput!]!
+  getPlaceDetails(input: PlaceDetailsInput!): PlaceDetailsOutput!
+  checkPhoneExists(phoneNumber: String!): PhoneCheckOutput!
+  getPaymentStatus(paymentOrderId: String!): PaymentStatusResponse!
+  myPayments: [PaymentOrderType!]!
+  getPaymentOrderById(paymentOrderId: String!): PaymentOrderType!
+  getMyOrders(input: GetMyOrdersInput!): PaginatedOrdersResponse!
+  getOrderById(orderId: String!): OrderType!
 }
 
 input PaginationInput {
   page: Int! = 1
   limit: Int! = 10
+}
+
+input GeocodeAddressInput {
+  address: String!
+}
+
+input ReverseGeocodeInput {
+  latitude: Float!
+  longitude: Float!
+}
+
+input SearchPlacesInput {
+  query: String!
+  sessionToken: String
+}
+
+input PlaceDetailsInput {
+  placeId: String!
+  sessionToken: String
+}
+
+input GetMyOrdersInput {
+  page: Float
+  limit: Float
+  status: OrderStatus
 }
 
 type Mutation {
@@ -340,6 +540,9 @@ type Mutation {
   createAddress(input: CreateAddressInput!): Address!
   updateAddress(id: ID!, input: UpdateAddressInput!): Address!
   deleteAddress(id: ID!): Address!
+  initiatePayment(input: InitiatePaymentInput!): InitiatePaymentResponse!
+  processRefund(input: ProcessRefundInput!): RefundResponse!
+  cancelOrder(input: CancelOrderInput!): OrderType!
   sendOtp(phoneNumber: String!): String!
   verifyWhatsAppOtp(phoneNumber: String!, otp: String!, input: CreateUserInput): String!
   verifyOtpAndLogin(idToken: String!, input: CreateUserInput): String!
@@ -566,27 +769,59 @@ input CreateChargesInput {
 }
 
 input CreateAddressInput {
-  name: String!
-  streetAddress: String!
-  extendedAddress: String
+  addressType: String!
+  recipientPhone: String!
+  recipientName: String!
+  buildingName: String!
+  floor: String
+  streetArea: String
+  landmark: String
   addressLocality: String!
   addressRegion: String!
   postalCode: String!
   addressCountry: String!
-  telephone: String!
   isDefault: Boolean
+  latitude: Float!
+  longitude: Float!
+  formattedAddress: String!
+  placeId: String
 }
 
 input UpdateAddressInput {
-  name: String
-  streetAddress: String
-  extendedAddress: String
+  addressType: String
+  recipientPhone: String
+  recipientName: String
+  buildingName: String
+  floor: String
+  streetArea: String
+  landmark: String
   addressLocality: String
   addressRegion: String
   postalCode: String
   addressCountry: String
-  telephone: String
   isDefault: Boolean
+  latitude: Float
+  longitude: Float
+  formattedAddress: String
+  placeId: String
+}
+
+input InitiatePaymentInput {
+  cartId: String!
+  amount: String!
+  currency: String!
+  returnUrl: String
+}
+
+input ProcessRefundInput {
+  paymentOrderId: String!
+  refundAmount: String!
+  reason: String
+}
+
+input CancelOrderInput {
+  orderId: String!
+  reason: String
 }
 
 input CreateUserInput {

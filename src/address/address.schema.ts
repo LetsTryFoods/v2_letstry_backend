@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
-import { ObjectType, Field, ID, GraphQLISODateTime } from '@nestjs/graphql';
+import { Document } from 'mongoose';
+import { ObjectType, Field, ID, GraphQLISODateTime, Float } from '@nestjs/graphql';
 
 export type AddressDocument = Address & Document;
 
@@ -10,21 +10,37 @@ export class Address {
   @Field(() => ID)
   _id: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ required: true, index: true })
   @Field(() => ID)
-  userId: string;
+  identityId: string;
 
   @Prop({ required: true })
   @Field()
-  name: string;
+  addressType: string;
 
   @Prop({ required: true })
   @Field()
-  streetAddress: string;
+  recipientPhone: string;
+
+  @Prop({ required: true })
+  @Field()
+  recipientName: string;
+
+  @Prop({ required: true })
+  @Field()
+  buildingName: string;
 
   @Prop()
   @Field({ nullable: true })
-  extendedAddress?: string;
+  floor?: string;
+
+  @Prop()
+  @Field({ nullable: true })
+  streetArea?: string;
+
+  @Prop()
+  @Field({ nullable: true })
+  landmark?: string;
 
   @Prop({ required: true })
   @Field()
@@ -42,13 +58,25 @@ export class Address {
   @Field()
   addressCountry: string;
 
-  @Prop({ required: true })
-  @Field()
-  telephone: string;
-
   @Prop({ default: false })
   @Field()
   isDefault: boolean;
+
+  @Prop({ required: true })
+  @Field(() => Float)
+  latitude: number;
+
+  @Prop({ required: true })
+  @Field(() => Float)
+  longitude: number;
+
+  @Prop({ required: true })
+  @Field()
+  formattedAddress: string;
+
+  @Prop()
+  @Field({ nullable: true })
+  placeId?: string;
 
   @Field(() => GraphQLISODateTime)
   createdAt: Date;

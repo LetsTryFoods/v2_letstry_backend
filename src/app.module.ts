@@ -20,6 +20,7 @@ import { CartModule } from './cart/cart.module';
 import { CouponModule } from './coupon/coupon.module';
 import { ChargesModule } from './charges/charges.module';
 import { AddressModule } from './address/address.module';
+import { PaymentModule } from './payment/payment.module';
 
 
 @Module({
@@ -37,6 +38,7 @@ import { AddressModule } from './address/address.module';
     CouponModule,
     ChargesModule,
     AddressModule,
+    PaymentModule,
     AuthenticationModule,
     AppCacheModule,
   ],
