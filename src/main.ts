@@ -20,6 +20,7 @@ async function bootstrap() {
         'http://localhost:3000',
         'http://localhost:3001',
         'https://studio.apollographql.com',
+        'https://front.krsna.site/'
       ],
       credentials: true,
     });
