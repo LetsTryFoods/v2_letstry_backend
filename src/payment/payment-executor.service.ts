@@ -26,6 +26,7 @@ export class PaymentExecutorService {
     buyerPhone: string;
     productDescription: string;
     returnUrl: string;
+    paymentMode?: string;
   }): Promise<{
     checkoutUrl: string;
     zaakpayOrderId: string;
@@ -53,6 +54,7 @@ export class PaymentExecutorService {
       buyerPhone: params.buyerPhone,
       productDescription: params.productDescription,
       returnUrl: params.returnUrl,
+      paymentMode: params.paymentMode,
     });
 
     await this.paymentOrderModel.findOneAndUpdate(
@@ -186,10 +188,9 @@ export class PaymentExecutorService {
       };
     }
 
-    const zaakpayStatus =
-      await this.zaakpayService.checkTransactionStatus({
-        orderId: paymentOrderId,
-      });
+    const zaakpayStatus = await this.zaakpayService.checkTransactionStatus({
+      orderId: paymentOrderId,
+    });
 
     if (zaakpayStatus.success && zaakpayStatus.orders?.length > 0) {
       const order = zaakpayStatus.orders[0];
@@ -239,37 +240,5 @@ export class PaymentExecutorService {
       status: paymentOrder.paymentOrderStatus,
       details: paymentOrder,
     };
-  }
-
-  async retryPayment(paymentOrderId: string): Promise<void> {
-    const paymentOrder = await this.paymentOrderModel.findOne({
-      paymentOrderId,
-    });
-
-    if (!paymentOrder) {
-      throw new Error('Payment order not found');
-    }
-
-    if (paymentOrder.retryCount >= 3) {
-      this.paymentLogger.error('Max retry attempts reached', undefined, {
-        paymentOrderId,
-        retryCount: paymentOrder.retryCount,
-      });
-      throw new Error('Maximum retry attempts reached');
-    }
-
-    await this.paymentOrderModel.findOneAndUpdate(
-      { paymentOrderId },
-      {
-        $inc: { retryCount: 1 },
-        paymentOrderStatus: PaymentStatus.NOT_STARTED,
-      },
-    );
-
-    this.paymentLogger.logRetry({
-      paymentOrderId,
-      retryCount: paymentOrder.retryCount + 1,
-      reason: 'Manual retry triggered',
-    });
   }
 }

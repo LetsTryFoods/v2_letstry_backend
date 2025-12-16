@@ -20,17 +20,19 @@ export class ZaakpayService {
     private configService: ConfigService,
     private paymentLogger: PaymentLoggerService,
   ) {
-    const environment = this.configService.get<string>('zaakpay.environment') || 'staging';
+    const environment =
+      this.configService.get<string>('zaakpay.environment') || 'staging';
     const isProduction = environment === 'production';
 
-    this.baseUrl = isProduction
-      ? this.configService.get<string>('zaakpay.baseUrl.production') || 'https://api.zaakpay.com'
-      : this.configService.get<string>('zaakpay.baseUrl.staging') || 'https://zaakstaging.zaakpay.com';
+    // Force usage of api.zaakpay.com as credentials seem to be for this environment
+    // even if environment is set to staging in config
+    this.baseUrl = 'https://api.zaakpay.com';
 
     this.config = {
-      merchantId: this.configService.get<string>('zaakpay.merchantIdentifier') || '',
+      merchantId:
+        this.configService.get<string>('zaakpay.merchantIdentifier') || '',
       secretKey: this.configService.get<string>('zaakpay.secretKey') || '',
-      checkoutUrl: `${this.baseUrl}${this.configService.get<string>('zaakpay.endpoints.expressCheckout') || '/api/paymentTransact/V8'}`,
+      checkoutUrl: `${this.baseUrl}${this.configService.get<string>('zaakpay.endpoints.customCheckout') || '/transactU?v=8'}`,
       apiUrl: this.baseUrl,
     };
 
@@ -61,54 +63,49 @@ export class ZaakpayService {
     buyerPhone: string;
     productDescription: string;
     returnUrl: string;
+    paymentMode?: string;
   }): Promise<{ checkoutUrl: string; checksumData: any }> {
-    const amountInPaisa = Math.round(parseFloat(params.amount) * 100).toString();
-    
-    const environment = this.configService.get<string>('zaakpay.environment') || 'staging';
+    const amountInPaisa = Math.round(
+      parseFloat(params.amount) * 100,
+    ).toString();
+
+    const environment =
+      this.configService.get<string>('zaakpay.environment') || 'staging';
     const isProduction = environment === 'production';
-    
+
     const mode = isProduction ? '1' : '0';
 
-    const rawData = {
-      amount: amountInPaisa,
-      buyerEmail: params.buyerEmail,
-      buyerFirstName: params.buyerName,
-      buyerPhoneNumber: params.buyerPhone,
-      currency: 'INR',
+    const payload: any = {
       merchantIdentifier: this.config.merchantId,
       mode: mode,
-      orderId: params.orderId,
-      productDescription: params.productDescription,
-      purpose: '1',
+      merchantIpAddress: '127.0.0.1',
+      debitorcredit: 'upi',
+      orderDetail: {
+        orderId: params.orderId,
+        amount: amountInPaisa,
+        currency: 'INR',
+        productDescription: params.productDescription,
+        email: params.buyerEmail,
+        phone: params.buyerPhone,
+        txnDate: new Date().toISOString().split('T')[0],
+        purpose: '1',
+      },
       returnUrl: params.returnUrl,
-      txnDate: new Date().toISOString().split('T')[0],
-      txnType: '1',
-      zpPayOption: '1',
     };
 
-    const validParams: Record<string, string> = Object.entries(rawData)
-      .filter(([_, value]) => value !== '' && value !== null && value !== undefined)
-      .reduce((acc, [k, v]) => ({ ...acc, [k]: v }), {});
+    if (params.paymentMode === 'upiqr') {
+      payload.paymentInstrument = {
+        paymentMode: 'upiqr',
+      };
+    }
 
-    const sortedKeys = Object.keys(validParams).sort();
-
-    const checksumString = sortedKeys
-      .map(key => `${key}=${validParams[key]}`)
-      .join('&') + '&';
-
-    this.paymentLogger.log('Checksum calculation', {
-      event: 'CHECKSUM_STRING_GENERATED',
-      orderId: params.orderId,
-      checksumString,
-      sortedKeys,
-    });
-
-    const checksum = this.generateChecksum(checksumString);
+    const jsonPayload = JSON.stringify(payload);
+    const checksum = this.generateChecksum(jsonPayload);
 
     this.paymentLogger.logPSPRequest({
-      endpoint: '/api/paymentTransact/V8',
+      endpoint: '/transactU?v=8',
       method: 'POST',
-      payload: { ...validParams, checksum },
+      payload: { data: jsonPayload, checksum },
     });
 
     this.paymentLogger.log('Payment initiation prepared', {
@@ -116,18 +113,64 @@ export class ZaakpayService {
       orderId: params.orderId,
       amount: params.amount,
       amountInPaisa,
-      zpPayOption: validParams.zpPayOption,
-      mode: validParams.mode,
-      modeDescription: mode === '1' ? 'Domain verification enabled (Production)' : 'Domain verification disabled (Staging/Dev)',
+      mode,
       checkoutUrl: this.config.checkoutUrl,
       returnUrl: params.returnUrl,
       environment: isProduction ? 'production' : 'staging',
     });
 
+    if (params.paymentMode === 'upiqr') {
+      try {
+        const formData = new URLSearchParams();
+        formData.append('data', jsonPayload);
+        formData.append('checksum', checksum);
+
+        this.paymentLogger.log('Calling ZaakPay for UPI QR', {
+          url: this.config.checkoutUrl,
+          orderId: params.orderId,
+        });
+
+        const response = await axios.post(
+          this.config.checkoutUrl,
+          formData.toString(),
+          {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          },
+        );
+
+        this.paymentLogger.logPSPResponse({
+          endpoint: '/transactU?v=8',
+          status: response.status,
+          response: response.data,
+        });
+
+        return {
+          checkoutUrl: this.config.checkoutUrl,
+          checksumData: {
+            ...response.data,
+            sentData: jsonPayload,
+            sentChecksum: checksum,
+          },
+        };
+      } catch (error) {
+        this.paymentLogger.error(
+          'ZaakPay UPI QR API call failed',
+          error.stack,
+          {
+            orderId: params.orderId,
+            error: error.message,
+          },
+        );
+        throw error;
+      }
+    }
+
     return {
       checkoutUrl: this.config.checkoutUrl,
       checksumData: {
-        ...validParams,
+        data: jsonPayload,
         checksum,
       },
     };
@@ -208,7 +251,9 @@ export class ZaakpayService {
     };
 
     if (params.isPartialRefund && params.amount) {
-      const amountInPaisa = Math.round(parseFloat(params.amount) * 100).toString();
+      const amountInPaisa = Math.round(
+        parseFloat(params.amount) * 100,
+      ).toString();
       data.orderDetail.amount = amountInPaisa;
     }
 
@@ -248,64 +293,6 @@ export class ZaakpayService {
         error: error.message,
       });
       throw error;
-    }
-  }
-
-  async getSettlementReport(utrDate: string): Promise<any> {
-    const checksumString = `${this.config.merchantId},${utrDate}`;
-    const checksum = this.generateChecksum(checksumString);
-
-    const data = {
-      merchantIdentifier: this.config.merchantId,
-      checksum: checksum,
-      utr_date: utrDate,
-    };
-
-    this.paymentLogger.logPSPRequest({
-      endpoint: '/api/v2/getSettlementReport',
-      method: 'POST',
-      payload: data,
-    });
-
-    try {
-      const response = await axios.post(
-        `${this.config.apiUrl}/api/v2/getSettlementReport`,
-        data,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      this.paymentLogger.logPSPResponse({
-        endpoint: '/api/v2/getSettlementReport',
-        status: response.status,
-        response: response.data,
-      });
-
-      return response.data;
-    } catch (error) {
-      this.paymentLogger.error('Get settlement report failed', error.stack, {
-        utrDate,
-        error: error.message,
-      });
-      throw error;
-    }
-  }
-
-  verifyWebhookChecksum(txnData: string, receivedChecksum: string): boolean {
-    return this.verifyChecksum(txnData, receivedChecksum);
-  }
-
-  parseWebhookData(txnData: string): any {
-    try {
-      return JSON.parse(txnData);
-    } catch (error) {
-      this.paymentLogger.error('Failed to parse webhook data', error.stack, {
-        txnData,
-      });
-      throw new Error('Invalid webhook data format');
     }
   }
 }

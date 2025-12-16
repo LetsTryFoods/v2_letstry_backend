@@ -5,7 +5,10 @@ import { PaymentEvent, PaymentEventSchema } from './payment.schema';
 import { PaymentOrder, PaymentOrderSchema } from './payment.schema';
 import { Ledger, LedgerSchema } from './payment.schema';
 import { PaymentRefund, PaymentRefundSchema } from './payment.schema';
-import { PaymentReconciliation, PaymentReconciliationSchema } from './payment.schema';
+import {
+  PaymentReconciliation,
+  PaymentReconciliationSchema,
+} from './payment.schema';
 import { Order, OrderSchema } from './order/order.schema';
 import { Identity, IdentitySchema } from '../common/schemas/identity.schema';
 import { PaymentService } from './payment.service';
@@ -19,10 +22,12 @@ import { OrderService } from './order/order.service';
 import { OrderResolver } from './order/order.resolver';
 import { PaymentLoggerService } from './payment-logger.service';
 import { PaymentGatewayFactory } from './payment-gateway.factory';
+import { CartModule } from '../cart/cart.module';
 
 @Module({
   imports: [
     ConfigModule,
+    CartModule,
     MongooseModule.forFeature([
       { name: PaymentEvent.name, schema: PaymentEventSchema },
       { name: PaymentOrder.name, schema: PaymentOrderSchema },

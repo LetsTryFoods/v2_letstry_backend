@@ -373,6 +373,18 @@ type InitiatePaymentResponse {
   checksumData: ChecksumDataType!
 }
 
+type InitiateUpiQrPaymentResponse {
+  paymentOrderId: String!
+  qrCodeData: String!
+  qrCodeUrl: String
+  expiresAt: String
+  zaakpayTxnId: String
+  amount: String!
+  currency: String!
+  responseCode: String
+  responseMessage: String
+}
+
 type PaymentStatusResponse {
   paymentOrderId: String!
   status: PaymentStatus!
@@ -521,6 +533,7 @@ type Mutation {
   unarchiveCategory(id: ID!): Category!
   adminLogin(email: String!, password: String!): String!
   createAdmin(email: String!, password: String!): String!
+  adminLogout: String!
   createBanner(input: CreateBannerInput!): Banner!
   updateBanner(id: ID!, input: UpdateBannerInput!): Banner!
   deleteBanner(id: ID!): Banner!
@@ -541,11 +554,13 @@ type Mutation {
   updateAddress(id: ID!, input: UpdateAddressInput!): Address!
   deleteAddress(id: ID!): Address!
   initiatePayment(input: InitiatePaymentInput!): InitiatePaymentResponse!
+  initiateUpiQrPayment(input: InitiateUpiQrPaymentInput!): InitiateUpiQrPaymentResponse!
   processRefund(input: ProcessRefundInput!): RefundResponse!
   cancelOrder(input: CancelOrderInput!): OrderType!
   sendOtp(phoneNumber: String!): String!
   verifyWhatsAppOtp(phoneNumber: String!, otp: String!, input: CreateUserInput): String!
   verifyOtpAndLogin(idToken: String!, input: CreateUserInput): String!
+  logout: String!
 }
 
 input CreateProductInput {
@@ -810,6 +825,14 @@ input InitiatePaymentInput {
   cartId: String!
   amount: String!
   currency: String!
+  returnUrl: String
+}
+
+input InitiateUpiQrPaymentInput {
+  cartId: String!
+  buyerEmail: String!
+  buyerName: String!
+  buyerPhone: String!
   returnUrl: String
 }
 

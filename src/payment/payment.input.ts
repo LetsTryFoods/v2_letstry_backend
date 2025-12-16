@@ -1,5 +1,11 @@
 import { InputType, Field } from '@nestjs/graphql';
-import { IsNotEmpty, IsString, IsOptional, IsNumber, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsNumber,
+  Min,
+} from 'class-validator';
 
 @InputType()
 export class InitiatePaymentInput {
@@ -73,4 +79,32 @@ export class BulkTransactionStatusInput {
   @IsNumber()
   @Min(1)
   limit?: number;
+}
+
+@InputType()
+export class InitiateUpiQrPaymentInput {
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  cartId: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  buyerEmail: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  buyerName: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  buyerPhone: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  returnUrl?: string;
 }

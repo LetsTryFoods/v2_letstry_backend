@@ -1,4 +1,9 @@
-import { Field, ObjectType, InputType, registerEnumType } from '@nestjs/graphql';
+import {
+  Field,
+  ObjectType,
+  InputType,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { PaymentStatus, PaymentMethod } from './payment.schema';
 
 registerEnumType(PaymentStatus, {
@@ -259,6 +264,36 @@ export class InitiatePaymentResponse {
 
   @Field(() => ChecksumDataType)
   checksumData: ChecksumDataType;
+}
+
+@ObjectType()
+export class InitiateUpiQrPaymentResponse {
+  @Field()
+  paymentOrderId: string;
+
+  @Field()
+  qrCodeData: string;
+
+  @Field({ nullable: true })
+  qrCodeUrl?: string;
+
+  @Field({ nullable: true })
+  expiresAt?: string;
+
+  @Field({ nullable: true })
+  zaakpayTxnId?: string;
+
+  @Field()
+  amount: string;
+
+  @Field()
+  currency: string;
+
+  @Field({ nullable: true })
+  responseCode?: string;
+
+  @Field({ nullable: true })
+  responseMessage?: string;
 }
 
 @ObjectType()
