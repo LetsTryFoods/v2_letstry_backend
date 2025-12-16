@@ -42,4 +42,19 @@ export class AdminResolver {
     const admin = await this.adminService.create({ email, password });
     return `Admin created with email: ${admin.email}`;
   }
+
+  @Mutation(() => String)
+  @Public()
+  async adminLogout(@Context() context): Promise<string> {
+    if (context.res) {
+      context.res.cookie('access_token', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        maxAge: 0,
+        domain: process.env.NODE_ENV === 'production' ? '.krsna.site' : undefined,
+      });
+    }
+    return 'Admin logged out successfully';
+  }
 }

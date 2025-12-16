@@ -83,4 +83,20 @@ export class UserAuthResolver {
     
     return token;
   }
+
+  @Mutation(() => String)
+  @Public()
+  async logout(@Context() context: any): Promise<string> {
+    if (context.res) {
+      context.res.cookie('access_token', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 0,
+        domain: process.env.NODE_ENV === 'production' ? '.krsna.site' : undefined,
+      });
+    }
+    
+    return 'Logged out successfully';
+  }
 }
