@@ -280,15 +280,17 @@ export class AdminUserService implements OnModuleInit {
     // Update last login
     await this.userModel.findByIdAndUpdate(user._id, { lastLoginAt: new Date() });
 
-    // Build permissions array for frontend
+    // Build permissions array for frontend (sorted by sortOrder)
     const permissions: AdminPermissionResponse[] = (role.permissions || [])
       .filter((p: any) => p.permission && p.permission.isActive)
       .map((p: any) => ({
         slug: p.permission.slug,
         name: p.permission.name,
         module: p.permission.module,
+        sortOrder: p.permission.sortOrder || 0,
         actions: p.actions,
-      }));
+      }))
+      .sort((a: AdminPermissionResponse, b: AdminPermissionResponse) => a.sortOrder - b.sortOrder);
 
     // Generate JWT
     const payload = {
@@ -345,8 +347,10 @@ export class AdminUserService implements OnModuleInit {
           slug: p.permission.slug,
           name: p.permission.name,
           module: p.permission.module,
+          sortOrder: p.permission.sortOrder || 0,
           actions: p.actions,
-        })),
+        }))
+        .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
     };
   }
 
@@ -372,8 +376,10 @@ export class AdminUserService implements OnModuleInit {
         slug: p.permission.slug,
         name: p.permission.name,
         module: p.permission.module,
+        sortOrder: p.permission.sortOrder || 0,
         actions: p.actions,
-      }));
+      }))
+      .sort((a: AdminPermissionResponse, b: AdminPermissionResponse) => a.sortOrder - b.sortOrder);
 
     return {
       _id: user._id.toString(),

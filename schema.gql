@@ -319,6 +319,7 @@ type AdminPermissionResponse {
   slug: String!
   name: String!
   module: String!
+  sortOrder: Int!
   actions: [String!]!
 }
 
@@ -409,6 +410,71 @@ type SeoPage {
   updatedAt: DateTime!
 }
 
+type SocialMediaLink {
+  platform: String!
+  url: String!
+  iconUrl: String
+}
+
+type QuickLink {
+  label: String!
+  url: String!
+  order: Float!
+  isActive: Boolean!
+}
+
+type FooterDetail {
+  _id: ID!
+  backgroundColor: String
+  textColor: String
+  linkColor: String
+  linkHoverColor: String
+  logoUrl: String
+  socialMediaTitle: String
+  socialMediaLinks: [SocialMediaLink!]
+  quickLinksTitle: String
+  quickLinks: [QuickLink!]
+  contactTitle: String
+  companyName: String!
+  cin: String
+  address: String!
+  email: String!
+  phone: String!
+  exportEmailLabel: String
+  exportEmail: String
+  copyrightText: String
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type FAQ {
+  _id: ID!
+  question: String!
+  answer: String!
+  category: FAQCategory!
+  status: FAQStatus!
+  order: Float!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""FAQ category enum"""
+enum FAQCategory {
+  GENERAL
+  ORDERS
+  SHIPPING
+  PAYMENT
+  RETURNS
+  PRODUCTS
+}
+
+"""FAQ status enum"""
+enum FAQStatus {
+  ACTIVE
+  INACTIVE
+}
+
 type Query {
   hello: String!
   products(pagination: PaginationInput! = {page: 1, limit: 10}, includeOutOfStock: Boolean! = false): PaginatedProducts!
@@ -453,17 +519,38 @@ type Query {
   activePermissions: [Permission!]!
   permission(id: String!): Permission
   permissionModules: [String!]!
+
+  """Get all active permissions sorted by sortOrder"""
+  sortedPermissions: [Permission!]!
   adminRoles(page: Int! = 1, limit: Int! = 10): AdminRolePagination!
   activeAdminRoles: [AdminRolePopulated!]!
   adminRole(id: String!): AdminRolePopulated
   adminUsers(page: Int! = 1, limit: Int! = 10): AdminUserPagination!
   adminUser(id: String!): AdminUserPopulated
   adminMe: AdminMeResponse
+  footerDetails: [FooterDetail!]!
+  activeFooterDetails: [FooterDetail!]!
+  footerDetail(id: ID!): FooterDetail
+
+  """Get all active FAQs (public)"""
+  activeFAQs(category: FAQCategory): [FAQ!]!
+
+  """Get all FAQs with optional filters (admin)"""
+  faqs(filter: FAQFilterInput): [FAQ!]!
+
+  """Get single FAQ by ID"""
+  faq(id: ID!): FAQ!
 }
 
 input PaginationInput {
   page: Int! = 1
   limit: Int! = 10
+}
+
+input FAQFilterInput {
+  category: FAQCategory
+  status: FAQStatus
+  searchQuery: String
 }
 
 type Mutation {
@@ -520,6 +607,9 @@ type Mutation {
   updatePermission(id: String!, input: UpdatePermissionInput!): Permission
   deletePermission(id: String!): Boolean!
   togglePermissionActive(id: String!): Permission
+
+  """Reorder permissions for sidebar display"""
+  reorderPermissions(orderedIds: [String!]!): Boolean!
   createAdminRole(input: CreateAdminRoleInput!): AdminRolePopulated!
   updateAdminRole(id: String!, input: UpdateAdminRoleInput!): AdminRolePopulated
   deleteAdminRole(id: String!): Boolean!
@@ -531,6 +621,24 @@ type Mutation {
   adminUserLogin(input: AdminLoginInput!): AdminAuthResponse!
   changeAdminPassword(input: ChangePasswordInput!): Boolean!
   adminLogout: Boolean!
+  createFooterDetail(input: CreateFooterDetailInput!): FooterDetail!
+  updateFooterDetail(id: ID!, input: UpdateFooterDetailInput!): FooterDetail!
+  deleteFooterDetail(id: ID!): FooterDetail!
+
+  """Create a new FAQ"""
+  createFAQ(input: CreateFAQInput!): FAQ!
+
+  """Update an existing FAQ"""
+  updateFAQ(input: UpdateFAQInput!): FAQ!
+
+  """Delete a FAQ"""
+  deleteFAQ(id: ID!): Boolean!
+
+  """Toggle FAQ active/inactive status"""
+  toggleFAQStatus(id: ID!): FAQ!
+
+  """Reorder FAQs"""
+  reorderFAQs(ids: [ID!]!): Boolean!
   sendOtp(phoneNumber: String!): String!
   verifyOtpAndLogin(idToken: String!, input: CreateUserInput): String!
 }
@@ -904,6 +1012,80 @@ input AdminLoginInput {
 input ChangePasswordInput {
   currentPassword: String!
   newPassword: String!
+}
+
+input CreateFooterDetailInput {
+  backgroundColor: String
+  textColor: String
+  linkColor: String
+  linkHoverColor: String
+  logoUrl: String
+  socialMediaTitle: String
+  socialMediaLinks: [SocialMediaLinkInput!]
+  quickLinksTitle: String
+  quickLinks: [QuickLinkInput!]
+  contactTitle: String
+  companyName: String!
+  cin: String
+  address: String!
+  email: String!
+  phone: String!
+  exportEmailLabel: String
+  exportEmail: String
+  copyrightText: String
+  isActive: Boolean
+}
+
+input SocialMediaLinkInput {
+  platform: String!
+  url: String!
+  iconUrl: String
+}
+
+input QuickLinkInput {
+  label: String!
+  url: String!
+  order: Float
+  isActive: Boolean
+}
+
+input UpdateFooterDetailInput {
+  backgroundColor: String
+  textColor: String
+  linkColor: String
+  linkHoverColor: String
+  logoUrl: String
+  socialMediaTitle: String
+  socialMediaLinks: [SocialMediaLinkInput!]
+  quickLinksTitle: String
+  quickLinks: [QuickLinkInput!]
+  contactTitle: String
+  companyName: String
+  cin: String
+  address: String
+  email: String
+  phone: String
+  exportEmailLabel: String
+  exportEmail: String
+  copyrightText: String
+  isActive: Boolean
+}
+
+input CreateFAQInput {
+  question: String!
+  answer: String!
+  category: FAQCategory! = GENERAL
+  status: FAQStatus! = ACTIVE
+  order: Int! = 0
+}
+
+input UpdateFAQInput {
+  question: String
+  answer: String
+  category: FAQCategory = GENERAL
+  status: FAQStatus = ACTIVE
+  order: Int = 0
+  id: ID!
 }
 
 input CreateUserInput {

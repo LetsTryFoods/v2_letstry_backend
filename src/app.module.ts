@@ -24,6 +24,8 @@ import { AddressModule } from './address/address.module';
 import { ManufacturingAddressModule } from './manufacturing-address/manufacturing-address.module';
 import { SeoContentModule } from './seo-content/seo-content.module';
 import { RbacModule } from './rbac/rbac.module';
+import { FooterDetailModule } from './footer-detail/footer-detail.module';
+import { FAQModule } from './faq/faq.module';
 
 
 @Module({
@@ -44,6 +46,8 @@ import { RbacModule } from './rbac/rbac.module';
     ManufacturingAddressModule,
     SeoContentModule,
     RbacModule,
+    FooterDetailModule,
+    FAQModule,
     UserAuthModule,
     AuthModule,
     AppCacheModule,

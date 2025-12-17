@@ -102,4 +102,28 @@ export class PermissionService implements OnModuleInit {
   async getModules(): Promise<string[]> {
     return this.permissionModel.distinct('module').exec();
   }
+
+  // Reorder permissions - update sortOrder for multiple permissions
+  async reorderPermissions(orderedIds: string[]): Promise<boolean> {
+    try {
+      const bulkOperations = orderedIds.map((id, index) => ({
+        updateOne: {
+          filter: { _id: id },
+          update: { $set: { sortOrder: index + 1 } },
+        },
+      }));
+
+      await this.permissionModel.bulkWrite(bulkOperations);
+      this.logger.log(`Reordered ${orderedIds.length} permissions`);
+      return true;
+    } catch (error) {
+      this.logger.error('Error reordering permissions:', error);
+      return false;
+    }
+  }
+
+  // Get all permissions sorted by sortOrder (for sidebar)
+  async findAllSorted(): Promise<Permission[]> {
+    return this.permissionModel.find({ isActive: true }).sort({ sortOrder: 1 }).exec();
+  }
 }

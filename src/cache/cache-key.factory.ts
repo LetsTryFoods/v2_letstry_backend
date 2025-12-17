@@ -110,4 +110,14 @@ export class CacheKeyFactory {
   getPolicyDetailKey(slug: string, version: number): string {
     return `policy:detail:${slug}:v${version}`;
   }
+
+  // --- Footer Detail Keys ---
+
+  getFooterDetailListVersionKey(): string {
+    return `footer-detail:list:version`;
+  }
+
+  getFooterDetailListKey(version: number, type: string = 'all'): string {
+    return `footer-detail:list:v${version}:type:${type}`;
+  }
 }

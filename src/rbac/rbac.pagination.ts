@@ -74,6 +74,9 @@ export class AdminPermissionResponse {
   @Field()
   module: string;
 
+  @Field(() => Int)
+  sortOrder: number;
+
   @Field(() => [String])
   actions: string[];
 }

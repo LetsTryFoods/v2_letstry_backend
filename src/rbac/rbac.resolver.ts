@@ -89,6 +89,20 @@ export class RbacResolver {
     return this.permissionService.toggleActive(id);
   }
 
+  @Mutation(() => Boolean, { description: 'Reorder permissions for sidebar display' })
+  @UseGuards(JwtAuthGuard)
+  async reorderPermissions(
+    @Args('orderedIds', { type: () => [String] }) orderedIds: string[],
+  ): Promise<boolean> {
+    return this.permissionService.reorderPermissions(orderedIds);
+  }
+
+  @Query(() => [Permission], { name: 'sortedPermissions', description: 'Get all active permissions sorted by sortOrder' })
+  @UseGuards(JwtAuthGuard)
+  async getSortedPermissions(): Promise<Permission[]> {
+    return this.permissionService.findAllSorted();
+  }
+
   // ============ ADMIN ROLE QUERIES & MUTATIONS ============
 
   @Query(() => AdminRolePagination, { name: 'adminRoles' })

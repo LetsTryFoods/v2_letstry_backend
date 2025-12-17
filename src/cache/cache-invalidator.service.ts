@@ -63,4 +63,8 @@ export class CacheInvalidatorService {
     if (policy.title) await this.cacheService.bumpVersion(this.cacheKeyFactory.getPolicyDetailVersionKey(policy.title));
     if (policy.type) await this.cacheService.bumpVersion(this.cacheKeyFactory.getPolicyDetailVersionKey(policy.type));
   }
+
+  async invalidateFooterDetail() {
+    await this.cacheService.bumpVersion(this.cacheKeyFactory.getFooterDetailListVersionKey());
+  }
 }
