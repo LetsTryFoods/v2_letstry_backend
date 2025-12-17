@@ -84,15 +84,30 @@ export class PaymentController {
   }
 
   private parseTxnData(txnDataString: string): any {
-    const params: any = {};
-    const pairs = txnDataString.split('&');
-    
-    for (const pair of pairs) {
-      const [key, value] = pair.split('=');
-      params[key] = decodeURIComponent(value || '');
+    try {
+      const parsed = JSON.parse(txnDataString);
+      
+      if (parsed.txns && parsed.txns.length > 0) {
+        const txn = parsed.txns[0];
+        return {
+          orderId: txn.orderId,
+          responseCode: txn.responseCode,
+          responseDescription: txn.responseDescription,
+          txnId: txn.pgTransId,
+          paymentMethod: txn.paymentMode,
+          bankTxnId: txn.bankRefNum,
+          cardType: txn.cardScheme,
+          cardNumber: txn.cardToken,
+          amount: txn.amount,
+          status: txn.responseCode === '100' ? 'SUCCESS' : 'FAILED',
+        };
+      }
+      
+      throw new Error('No transactions found in webhook data');
+    } catch (error) {
+      this.webhookLogger.logWebhookError('Failed to parse txnData', { error: error.message, txnDataString });
+      throw error;
     }
-    
-    return params;
   }
 
   private mapPaymentMethod(method: string): string {
