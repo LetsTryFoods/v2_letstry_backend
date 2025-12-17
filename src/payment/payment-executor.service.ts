@@ -5,6 +5,8 @@ import { PaymentOrder, PaymentStatus } from './payment.schema';
 import { ZaakpayService } from './zaakpay.service';
 import { LedgerService } from './ledger.service';
 import { PaymentLoggerService } from './payment-logger.service';
+import { OrderService } from './order/order.service';
+import { CartService } from '../cart/cart.service';
 
 @Injectable()
 export class PaymentExecutorService {
@@ -14,6 +16,8 @@ export class PaymentExecutorService {
     private zaakpayService: ZaakpayService,
     private ledgerService: LedgerService,
     private paymentLogger: PaymentLoggerService,
+    private orderService: OrderService,
+    private cartService: CartService,
   ) {}
 
   async executePaymentOrder(params: {
@@ -116,11 +120,57 @@ export class PaymentExecutorService {
       { ledgerUpdated: true },
     );
 
+    await this.createOrderAndClearCart(paymentOrder);
+
     this.paymentLogger.logPaymentSuccess({
       paymentOrderId: params.paymentOrderId,
       zaakpayTxnId: params.zaakpayTxnId,
       amount: paymentOrder.amount,
     });
+  }
+
+  private async createOrderAndClearCart(paymentOrder: any): Promise<void> {
+    const paymentEvent = await this.getPaymentEvent(paymentOrder.paymentEventId);
+    
+    if (!paymentEvent) {
+      this.paymentLogger.error('Payment event not found', '', { paymentOrderId: paymentOrder.paymentOrderId });
+      return;
+    }
+
+    const cart = await this.getCartDetails(paymentEvent.cartId);
+    
+    if (!cart) {
+      this.paymentLogger.error('Cart not found', '', { cartId: paymentEvent.cartId });
+      return;
+    }
+
+    await this.orderService.createOrder({
+      identityId: paymentOrder.identityId.toString(),
+      paymentOrderId: paymentOrder.paymentOrderId,
+      cartId: paymentEvent.cartId.toString(),
+      totalAmount: paymentOrder.amount,
+      currency: paymentOrder.currency,
+      shippingAddressId: cart.shippingAddressId?.toString(),
+      items: cart.items.map((item: any) => ({
+        productId: item.productId.toString(),
+        quantity: item.quantity,
+        price: item.price.toString(),
+        totalPrice: item.totalPrice.toString(),
+        name: item.name,
+        sku: item.sku,
+      })),
+    });
+
+    await this.cartService.clearCart(paymentOrder.identityId.toString());
+  }
+
+  private async getPaymentEvent(paymentEventId: any): Promise<any> {
+    const PaymentEvent = this.paymentOrderModel.db.model('PaymentEvent');
+    return PaymentEvent.findById(paymentEventId);
+  }
+
+  private async getCartDetails(cartId: any): Promise<any> {
+    return this.cartService.getCart(cartId.toString());
   }
 
   async handlePaymentFailure(params: {
