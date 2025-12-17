@@ -7,6 +7,7 @@ import { LedgerService } from './ledger.service';
 import { PaymentLoggerService } from './payment-logger.service';
 import { OrderService } from './order/order.service';
 import { CartService } from '../cart/cart.service';
+import { OrderCartLoggerService } from './order-cart-logger.service';
 
 @Injectable()
 export class PaymentExecutorService {
@@ -18,6 +19,7 @@ export class PaymentExecutorService {
     private paymentLogger: PaymentLoggerService,
     private orderService: OrderService,
     private cartService: CartService,
+    private orderCartLogger: OrderCartLoggerService,
   ) {}
 
   async executePaymentOrder(params: {
@@ -134,6 +136,7 @@ export class PaymentExecutorService {
     
     if (!paymentEvent) {
       this.paymentLogger.error('Payment event not found', '', { paymentOrderId: paymentOrder.paymentOrderId });
+      this.orderCartLogger.logPaymentEventNotFound(paymentOrder.paymentOrderId);
       return;
     }
 
@@ -141,27 +144,59 @@ export class PaymentExecutorService {
     
     if (!cart) {
       this.paymentLogger.error('Cart not found', '', { cartId: paymentEvent.cartId });
+      this.orderCartLogger.logCartNotFound(paymentEvent.cartId.toString());
       return;
     }
 
-    await this.orderService.createOrder({
-      identityId: paymentOrder.identityId.toString(),
-      paymentOrderId: paymentOrder.paymentOrderId,
-      cartId: paymentEvent.cartId.toString(),
-      totalAmount: paymentOrder.amount,
-      currency: paymentOrder.currency,
-      shippingAddressId: cart.shippingAddressId?.toString(),
-      items: cart.items.map((item: any) => ({
-        productId: item.productId.toString(),
-        quantity: item.quantity,
-        price: item.price.toString(),
-        totalPrice: item.totalPrice.toString(),
-        name: item.name,
-        sku: item.sku,
-      })),
-    });
+    try {
+      this.orderCartLogger.logOrderCreationStart(
+        paymentOrder.paymentOrderId,
+        paymentEvent.cartId.toString()
+      );
 
-    await this.cartService.clearCart(paymentOrder.identityId.toString());
+      const order = await this.orderService.createOrder({
+        identityId: paymentOrder.identityId.toString(),
+        paymentOrderId: paymentOrder.paymentOrderId,
+        cartId: paymentEvent.cartId.toString(),
+        totalAmount: paymentOrder.amount,
+        currency: paymentOrder.currency,
+        shippingAddressId: cart.shippingAddressId?.toString(),
+        items: cart.items.map((item: any) => ({
+          productId: item.productId.toString(),
+          quantity: item.quantity,
+          price: item.price.toString(),
+          totalPrice: item.totalPrice.toString(),
+          name: item.name,
+          sku: item.sku,
+        })),
+      });
+
+      this.orderCartLogger.logOrderCreated(
+        order.orderId,
+        paymentOrder.paymentOrderId,
+        cart.items.length,
+        paymentOrder.amount
+      );
+
+      this.orderCartLogger.logCartClearStart(
+        paymentOrder.identityId.toString(),
+        paymentEvent.cartId.toString()
+      );
+
+      await this.cartService.clearCart(paymentOrder.identityId.toString());
+
+      this.orderCartLogger.logCartCleared(
+        paymentOrder.identityId.toString(),
+        cart.items.length
+      );
+    } catch (error) {
+      this.orderCartLogger.logOrderCreationError(error.message, {
+        paymentOrderId: paymentOrder.paymentOrderId,
+        cartId: paymentEvent.cartId.toString(),
+        stack: error.stack,
+      });
+      throw error;
+    }
   }
 
   private async getPaymentEvent(paymentEventId: any): Promise<any> {

@@ -28,6 +28,7 @@ import { SseService } from './sse/sse.service';
 import { SseController } from './sse/sse.controller';
 import { SseLoggerService } from './sse/sse-logger.service';
 import { WebhookLoggerService } from './webhook-logger.service';
+import { OrderCartLoggerService } from './order-cart-logger.service';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { WebhookLoggerService } from './webhook-logger.service';
     SseService,
     SseLoggerService,
     WebhookLoggerService,
+    OrderCartLoggerService,
   ],
   exports: [PaymentService, OrderService],
 })
