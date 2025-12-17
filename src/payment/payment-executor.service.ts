@@ -205,7 +205,8 @@ export class PaymentExecutorService {
   }
 
   private async getCartDetails(cartId: any): Promise<any> {
-    return this.cartService.getCart(cartId.toString());
+    const Cart = this.paymentOrderModel.db.model('Cart');
+    return Cart.findById(cartId);
   }
 
   async handlePaymentFailure(params: {
