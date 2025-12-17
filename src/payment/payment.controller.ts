@@ -3,6 +3,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PaymentExecutorService } from './payment-executor.service';
 import { ZaakpayService } from './zaakpay.service';
 import { PaymentLoggerService } from './payment-logger.service';
+import { WebhookLoggerService } from './webhook-logger.service';
 import { Public } from '../common/decorators/public.decorator';
 
 @Controller('payment')
@@ -12,6 +13,7 @@ export class PaymentController {
     private readonly zaakpayService: ZaakpayService,
     private readonly paymentLogger: PaymentLoggerService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly webhookLogger: WebhookLoggerService,
   ) {}
 
   @Post('webhook')
@@ -20,14 +22,18 @@ export class PaymentController {
   async handleWebhook(@Body() body: any): Promise<string> {
     try {
       this.paymentLogger.logWebhookReceived(body);
+      this.webhookLogger.logWebhookReceived(body);
 
       const checksumValid = this.zaakpayService.verifyChecksum(
         body.txnData,
         body.checksum,
       );
 
+      this.webhookLogger.logChecksumVerification(body.txnData, checksumValid);
+
       if (!checksumValid) {
         this.paymentLogger.error('Webhook checksum verification failed', '', body);
+        this.webhookLogger.logWebhookError('Checksum verification failed', body);
         return 'FAILURE';
       }
 
@@ -35,6 +41,8 @@ export class PaymentController {
 
       const paymentOrderId = txnData.orderId;
       const responseCode = txnData.responseCode;
+
+      this.webhookLogger.logPaymentStatusUpdate(paymentOrderId, txnData.status, responseCode);
 
       if (responseCode === '100') {
         await this.paymentExecutorService.handlePaymentSuccess({
@@ -70,6 +78,7 @@ export class PaymentController {
         error: error.message,
         body,
       });
+      this.webhookLogger.logWebhookError(error.message, { stack: error.stack, body });
       return 'FAILURE';
     }
   }
@@ -108,5 +117,6 @@ export class PaymentController {
       paymentOrderId,
       status,
     });
+    this.webhookLogger.logEventEmission(paymentOrderId, status);
   }
 }

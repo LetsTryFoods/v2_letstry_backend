@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import type { Response } from 'express';
+import { SseLoggerService } from './sse-logger.service';
 
 interface SseConnection {
   response: Response;
@@ -12,6 +13,8 @@ interface SseConnection {
 export class SseService {
   private readonly logger = new Logger(SseService.name);
   private connections = new Map<string, SseConnection[]>();
+
+  constructor(private readonly sseLogger: SseLoggerService) {}
 
   addConnection(paymentOrderId: string, response: Response): void {
     const connection: SseConnection = {
@@ -25,6 +28,7 @@ export class SseService {
     this.connections.set(paymentOrderId, existing);
 
     this.logger.log(`SSE connection added for payment ${paymentOrderId}`);
+    this.sseLogger.logConnectionEstablished(paymentOrderId);
 
     response.on('close', () => {
       this.removeConnection(paymentOrderId, response);
@@ -38,6 +42,7 @@ export class SseService {
     message?: string;
   }): void {
     this.logger.log(`Payment status event received: ${payload.paymentOrderId} - ${payload.status}`);
+    this.sseLogger.logEventReceived(payload.paymentOrderId, payload.status);
     this.sendEventToClients(payload.paymentOrderId, payload);
   }
 
@@ -53,13 +58,16 @@ export class SseService {
       try {
         conn.response.write(`data: ${JSON.stringify(data)}\n\n`);
         this.logger.log(`SSE event sent to client for payment ${paymentOrderId}`);
+        this.sseLogger.logEventSent(paymentOrderId, data);
 
         if (this.isFinalStatus(data.status)) {
           conn.response.end();
           this.logger.log(`SSE connection closed for payment ${paymentOrderId} (final status)`);
+          this.sseLogger.logConnectionClosed(paymentOrderId, `Final status: ${data.status}`);
         }
       } catch (error) {
         this.logger.error(`Failed to send SSE event: ${error.message}`);
+        this.sseLogger.logError('Failed to send SSE event', error, paymentOrderId);
         this.removeConnection(paymentOrderId, conn.response);
       }
     });
@@ -82,6 +90,7 @@ export class SseService {
     }
 
     this.logger.log(`SSE connection removed for payment ${paymentOrderId}`);
+    this.sseLogger.logConnectionClosed(paymentOrderId, 'Client disconnected');
   }
 
   private isFinalStatus(status: string): boolean {

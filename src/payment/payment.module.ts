@@ -26,6 +26,8 @@ import { PaymentGatewayFactory } from './payment-gateway.factory';
 import { CartModule } from '../cart/cart.module';
 import { SseService } from './sse/sse.service';
 import { SseController } from './sse/sse.controller';
+import { SseLoggerService } from './sse/sse-logger.service';
+import { WebhookLoggerService } from './webhook-logger.service';
 
 @Module({
   imports: [
@@ -55,6 +57,8 @@ import { SseController } from './sse/sse.controller';
     PaymentLoggerService,
     PaymentGatewayFactory,
     SseService,
+    SseLoggerService,
+    WebhookLoggerService,
   ],
   exports: [PaymentService, OrderService],
 })
