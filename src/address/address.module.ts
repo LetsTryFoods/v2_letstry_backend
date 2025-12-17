@@ -10,10 +10,13 @@ import { Identity, IdentitySchema } from '../common/schemas/identity.schema';
   imports: [
     MongooseModule.forFeature([
       { name: Address.name, schema: AddressSchema },
-      { name: Identity.name, schema: IdentitySchema }
+      { name: Identity.name, schema: IdentitySchema },
     ]),
   ],
   providers: [AddressService, AddressResolver, GoogleMapsService],
-  exports: [AddressService],
+  exports: [
+    AddressService,
+    MongooseModule.forFeature([{ name: Address.name, schema: AddressSchema }]),
+  ],
 })
 export class AddressModule {}

@@ -5,7 +5,7 @@ export const DEFAULT_LIMIT = 10;
 export interface ProductFilter {
   _id?: string | { $ne: string };
   slug?: string;
-  categoryId?: string;
+  categoryIds?: string | string[];
   isArchived?: boolean;
   availabilityStatus?: string | { $ne: string };
   'variants.sku'?: string;

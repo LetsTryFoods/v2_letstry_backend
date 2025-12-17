@@ -21,7 +21,7 @@ export class ProductQueryBuilder {
   }
 
   withCategoryId(categoryId: string): this {
-    this.filter.categoryId = categoryId;
+    this.filter.categoryIds = categoryId;
     return this;
   }
 
@@ -35,7 +35,10 @@ export class ProductQueryBuilder {
   withoutOutOfStock(includeOutOfStock: boolean): this {
     if (!includeOutOfStock) {
       this.filter.variants = {
-        $elemMatch: { availabilityStatus: { $ne: 'out_of_stock' }, isActive: true },
+        $elemMatch: {
+          availabilityStatus: { $ne: 'out_of_stock' },
+          isActive: true,
+        },
       };
     }
     return this;
@@ -66,10 +69,7 @@ export class ProductQueryBuilder {
     ) {
       const variantsFilter = this.filter.variants;
       delete this.filter.variants;
-      this.filter.$and = [
-        { isArchived: false },
-        { variants: variantsFilter },
-      ];
+      this.filter.$and = [{ isArchived: false }, { variants: variantsFilter }];
       delete this.filter.isArchived;
     }
     return this.filter;
@@ -110,7 +110,10 @@ export class ProductQueryBuilder {
       .build();
   }
 
-  static forSearch(searchTerm: string, includeArchived: boolean): ProductFilter {
+  static forSearch(
+    searchTerm: string,
+    includeArchived: boolean,
+  ): ProductFilter {
     return new ProductQueryBuilder()
       .withSearch(searchTerm)
       .withArchived(includeArchived)
@@ -118,7 +121,10 @@ export class ProductQueryBuilder {
       .build();
   }
 
-  static forVariantId(variantId: string, includeArchived: boolean): ProductFilter {
+  static forVariantId(
+    variantId: string,
+    includeArchived: boolean,
+  ): ProductFilter {
     return new ProductQueryBuilder()
       .withArchived(includeArchived)
       .withVariantId(variantId)

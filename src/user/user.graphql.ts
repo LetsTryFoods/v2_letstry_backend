@@ -1,6 +1,7 @@
 import { ObjectType, Field, Int } from '@nestjs/graphql';
 import { Identity } from '../common/schemas/identity.schema';
 import { PaginationMeta } from '../common/pagination';
+import GraphQLJSON from 'graphql-type-json';
 
 @ObjectType()
 export class PlatformStats {
@@ -43,6 +44,12 @@ export class CustomerSummary {
   @Field(() => Int)
   totalRegistered: number;
 
+  @Field(() => Int)
+  totalRevenue: number;
+
+  @Field(() => Int)
+  newThisMonth: number;
+
   @Field(() => PlatformStats)
   platformStats: PlatformStats;
 
@@ -51,13 +58,52 @@ export class CustomerSummary {
 }
 
 @ObjectType()
+export class EnrichedCustomer extends Identity {
+  @Field(() => Int)
+  totalOrders: number;
+
+  @Field(() => Int)
+  totalSpent: number;
+
+  @Field(() => Int, { nullable: true })
+  activeCartItemsCount?: number;
+
+  @Field({ nullable: true })
+  displayPhone?: string;
+
+  @Field()
+  isGuest: boolean;
+}
+
+@ObjectType()
 export class PaginatedCustomersResponse {
-  @Field(() => [Identity])
-  customers: Identity[];
+  @Field(() => [EnrichedCustomer])
+  customers: EnrichedCustomer[];
 
   @Field(() => PaginationMeta)
   meta: PaginationMeta;
 
   @Field(() => CustomerSummary)
   summary: CustomerSummary;
+}
+
+@ObjectType()
+export class CustomerDetails extends Identity {
+  @Field(() => Int)
+  totalOrders: number;
+
+  @Field(() => Int)
+  totalSpent: number;
+
+  @Field()
+  isGuest: boolean;
+
+  @Field(() => GraphQLJSON)
+  orders: any[];
+
+  @Field(() => GraphQLJSON, { nullable: true })
+  activeCart?: any;
+
+  @Field(() => GraphQLJSON)
+  addresses: any[];
 }

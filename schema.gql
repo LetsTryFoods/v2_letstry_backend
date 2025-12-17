@@ -2,40 +2,49 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Identity {
+type CartItem {
+  productId: ID!
+  sku: String!
+  name: String!
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  mrp: Float!
+  imageUrl: String
+  attributes: JSON
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+type CartTotals {
+  subtotal: Float!
+  discountAmount: Float!
+  shippingCost: Float!
+  estimatedTax: Float!
+  handlingCharge: Float!
+  grandTotal: Float!
+}
+
+type Cart {
   _id: ID!
   identityId: String!
-  status: IdentityStatus!
-  phoneNumber: String
-  firstName: String
-  lastName: String
-  email: String
-  isPhoneVerified: Boolean!
-  isEmailVerified: Boolean!
-  firebaseUid: String
-  sessionIds: [String!]!
-  currentSessionId: String
-  lastLoginAt: DateTime
-  registeredAt: DateTime
-  lastActiveAt: DateTime
-  lifetimeValue: Float!
-  marketingSmsOptIn: Boolean
-  signupSource: JSON
-  ipAddress: String
-  deviceInfo: JSON
-  lastIp: String
-  role: String!
-  mergedGuestIds: [String!]!
+  status: CartStatus!
+  couponCode: String
+  shippingMethodId: String
+  expiresAt: DateTime
+  totalsSummary: CartTotals!
+  items: [CartItem!]!
   createdAt: DateTime!
   updatedAt: DateTime!
 }
 
-enum IdentityStatus {
-  GUEST
-  REGISTERED
-  VERIFIED
+enum CartStatus {
   ACTIVE
-  SUSPENDED
+  ORDERED
+  EXPIRED
   MERGED
 }
 
@@ -44,10 +53,65 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-"""
-The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
-"""
-scalar JSON
+type Address {
+  _id: ID!
+  identityId: ID!
+  addressType: String!
+  recipientPhone: String!
+  recipientName: String!
+  buildingName: String!
+  floor: String
+  streetArea: String
+  landmark: String
+  addressLocality: String!
+  addressRegion: String!
+  postalCode: String!
+  addressCountry: String!
+  isDefault: Boolean!
+  latitude: Float!
+  longitude: Float!
+  formattedAddress: String!
+  placeId: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type GoogleMapsAddressOutput {
+  formattedAddress: String!
+  streetAddress: String
+  extendedAddress: String
+  locality: String
+  region: String
+  postalCode: String
+  country: String
+  latitude: Float!
+  longitude: Float!
+}
+
+type PlacePredictionOutput {
+  placeId: String!
+  description: String!
+  mainText: String!
+  secondaryText: String!
+}
+
+type PlaceDetailsOutput {
+  placeId: String!
+  formattedAddress: String!
+  streetAddress: String
+  locality: String
+  region: String
+  postalCode: String
+  country: String
+  latitude: Float!
+  longitude: Float!
+}
+
+type PhoneCheckOutput {
+  exists: Boolean!
+  requiresLogin: Boolean!
+  message: String
+}
 
 type PaginationMeta {
   totalCount: Int!
@@ -86,14 +150,92 @@ type CustomerSummary {
   totalCustomers: Int!
   totalGuests: Int!
   totalRegistered: Int!
+  totalRevenue: Int!
+  newThisMonth: Int!
   platformStats: PlatformStats!
   statusStats: StatusStats!
 }
 
+type EnrichedCustomer {
+  _id: ID!
+  identityId: String!
+  status: IdentityStatus!
+  phoneNumber: String
+  firstName: String
+  lastName: String
+  email: String
+  isPhoneVerified: Boolean!
+  isEmailVerified: Boolean!
+  firebaseUid: String
+  sessionIds: [String!]!
+  currentSessionId: String
+  lastLoginAt: DateTime
+  registeredAt: DateTime
+  lastActiveAt: DateTime
+  lifetimeValue: Float!
+  marketingSmsOptIn: Boolean
+  signupSource: JSON
+  ipAddress: String
+  deviceInfo: JSON
+  lastIp: String
+  role: String!
+  mergedGuestIds: [String!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  totalOrders: Int!
+  totalSpent: Int!
+  activeCartItemsCount: Int
+  displayPhone: String
+  isGuest: Boolean!
+}
+
+enum IdentityStatus {
+  GUEST
+  REGISTERED
+  VERIFIED
+  ACTIVE
+  SUSPENDED
+  MERGED
+}
+
 type PaginatedCustomersResponse {
-  customers: [Identity!]!
+  customers: [EnrichedCustomer!]!
   meta: PaginationMeta!
   summary: CustomerSummary!
+}
+
+type CustomerDetails {
+  _id: ID!
+  identityId: String!
+  status: IdentityStatus!
+  phoneNumber: String
+  firstName: String
+  lastName: String
+  email: String
+  isPhoneVerified: Boolean!
+  isEmailVerified: Boolean!
+  firebaseUid: String
+  sessionIds: [String!]!
+  currentSessionId: String
+  lastLoginAt: DateTime
+  registeredAt: DateTime
+  lastActiveAt: DateTime
+  lifetimeValue: Float!
+  marketingSmsOptIn: Boolean
+  signupSource: JSON
+  ipAddress: String
+  deviceInfo: JSON
+  lastIp: String
+  role: String!
+  mergedGuestIds: [String!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  totalOrders: Int!
+  totalSpent: Int!
+  isGuest: Boolean!
+  orders: JSON!
+  activeCart: JSON
+  addresses: JSON!
 }
 
 type Banner {
@@ -178,47 +320,6 @@ type Policy {
   updatedAt: DateTime!
 }
 
-type CartItem {
-  productId: ID!
-  sku: String!
-  name: String!
-  quantity: Int!
-  unitPrice: Float!
-  totalPrice: Float!
-  mrp: Float!
-  imageUrl: String
-  attributes: JSON
-}
-
-type CartTotals {
-  subtotal: Float!
-  discountAmount: Float!
-  shippingCost: Float!
-  estimatedTax: Float!
-  handlingCharge: Float!
-  grandTotal: Float!
-}
-
-type Cart {
-  _id: ID!
-  identityId: String!
-  status: CartStatus!
-  couponCode: String
-  shippingMethodId: String
-  expiresAt: DateTime
-  totalsSummary: CartTotals!
-  items: [CartItem!]!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
-
-enum CartStatus {
-  ACTIVE
-  ORDERED
-  EXPIRED
-  MERGED
-}
-
 type Coupon {
   _id: ID!
   name: String!
@@ -252,36 +353,13 @@ type Charges {
   deliveryRestBelowThreshold: Float!
 }
 
-type Address {
-  _id: ID!
-  identityId: ID!
-  addressType: String!
-  recipientPhone: String!
-  recipientName: String!
-  buildingName: String!
-  floor: String
-  streetArea: String
-  landmark: String
-  addressLocality: String!
-  addressRegion: String!
-  postalCode: String!
-  addressCountry: String!
-  isDefault: Boolean!
-  latitude: Float!
-  longitude: Float!
-  formattedAddress: String!
-  placeId: String
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
-
 type Product {
   _id: ID!
   name: String!
   favourite: Boolean
   slug: String!
   description: String!
-  categoryId: String!
+  categoryIds: [String!]!
   brand: String!
   gtin: String
   mpn: String
@@ -301,6 +379,7 @@ type Product {
   createdAt: DateTime!
   updatedAt: DateTime!
   category: Category
+  categories: [Category!]
   defaultVariant: ProductVariant
   priceRange: PriceRange!
   availableVariants: [ProductVariant!]!
@@ -326,43 +405,6 @@ type Category {
   products: [Product!]!
   createdAt: DateTime!
   updatedAt: DateTime!
-}
-
-type GoogleMapsAddressOutput {
-  formattedAddress: String!
-  streetAddress: String
-  extendedAddress: String
-  locality: String
-  region: String
-  postalCode: String
-  country: String
-  latitude: Float!
-  longitude: Float!
-}
-
-type PlacePredictionOutput {
-  placeId: String!
-  description: String!
-  mainText: String!
-  secondaryText: String!
-}
-
-type PlaceDetailsOutput {
-  placeId: String!
-  formattedAddress: String!
-  streetAddress: String
-  locality: String
-  region: String
-  postalCode: String
-  country: String
-  latitude: Float!
-  longitude: Float!
-}
-
-type PhoneCheckOutput {
-  exists: Boolean!
-  requiresLogin: Boolean!
-  message: String
 }
 
 type Guest {
@@ -472,6 +514,15 @@ type OrderItemType {
   sku: String!
 }
 
+type OrderUserInfo {
+  identityId: String!
+  phoneNumber: String
+  email: String
+  firstName: String
+  lastName: String
+  status: String!
+}
+
 type OrderType {
   _id: String!
   orderId: String!
@@ -501,12 +552,69 @@ enum OrderStatus {
   REFUNDED
 }
 
+type OrderWithUserInfo {
+  _id: String!
+  orderId: String!
+  identityId: String!
+  paymentOrderId: String!
+  cartId: String!
+  totalAmount: String!
+  currency: String!
+  orderStatus: OrderStatus!
+  shippingAddressId: String
+  items: [OrderItemType!]!
+  deliveredAt: DateTime
+  cancelledAt: DateTime
+  trackingNumber: String
+  cancellationReason: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  userInfo: OrderUserInfo
+}
+
+type OrderStatusCount {
+  pending: Int!
+  confirmed: Int!
+  processing: Int!
+  shipped: Int!
+  delivered: Int!
+  cancelled: Int!
+  refunded: Int!
+}
+
+type OrdersSummary {
+  totalOrders: Int!
+  statusCounts: OrderStatusCount!
+}
+
 type PaginatedOrdersResponse {
   orders: [OrderType!]!
   total: Float!
   page: Float!
   limit: Float!
   totalPages: Float!
+}
+
+type AdminOrdersResponse {
+  orders: [OrderWithUserInfo!]!
+  meta: PaginationMeta!
+  summary: OrdersSummary!
+}
+
+type NewsletterSubscription {
+  _id: ID!
+  email: String!
+  isActive: Boolean!
+  source: String
+  ipAddress: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type SubscribeNewsletterResponse {
+  success: Boolean!
+  message: String!
+  email: String
 }
 
 type Query {
@@ -523,6 +631,14 @@ type Query {
   category(id: ID!, includeArchived: Boolean! = false): Category
   categoryBySlug(slug: String!, includeArchived: Boolean! = false): Category
   getAllCustomers(input: GetCustomersInput!): PaginatedCustomersResponse!
+  getCustomerDetails(id: ID!): CustomerDetails!
+  myAddresses: [Address!]!
+  address(id: ID!): Address!
+  geocodeAddress(input: GeocodeAddressInput!): GoogleMapsAddressOutput!
+  reverseGeocode(input: ReverseGeocodeInput!): GoogleMapsAddressOutput!
+  searchPlaces(input: SearchPlacesInput!): [PlacePredictionOutput!]!
+  getPlaceDetails(input: PlaceDetailsInput!): PlaceDetailsOutput!
+  checkPhoneExists(phoneNumber: String!): PhoneCheckOutput!
   banners: [Banner!]!
   activeBanners: [Banner!]!
   banner(id: ID!): Banner
@@ -537,18 +653,14 @@ type Query {
   coupons: [Coupon!]!
   activeCoupons: [Coupon!]!
   charges: Charges
-  myAddresses: [Address!]!
-  address(id: ID!): Address!
-  geocodeAddress(input: GeocodeAddressInput!): GoogleMapsAddressOutput!
-  reverseGeocode(input: ReverseGeocodeInput!): GoogleMapsAddressOutput!
-  searchPlaces(input: SearchPlacesInput!): [PlacePredictionOutput!]!
-  getPlaceDetails(input: PlaceDetailsInput!): PlaceDetailsOutput!
-  checkPhoneExists(phoneNumber: String!): PhoneCheckOutput!
   getPaymentStatus(paymentOrderId: String!): PaymentStatusResponse!
   myPayments: [PaymentOrderType!]!
   getPaymentOrderById(paymentOrderId: String!): PaymentOrderType!
   getMyOrders(input: GetMyOrdersInput!): PaginatedOrdersResponse!
+  getAllOrders(input: GetAllOrdersInput!): AdminOrdersResponse!
   getOrderById(orderId: String!): OrderType!
+  getAllNewsletterSubscriptions(isActive: Boolean): [NewsletterSubscription!]!
+  getNewsletterSubscriptionCount(isActive: Boolean): Float!
 }
 
 input PaginationInput {
@@ -562,12 +674,30 @@ input GetCustomersInput {
   status: String
   platform: CustomerPlatform
   searchTerm: String
+  startDate: JSON
+  endDate: JSON
+  sortBy: CustomerSortField
+  sortOrder: SortOrder
+  minSpent: Float
+  maxSpent: Float
 }
 
 enum CustomerPlatform {
   ANDROID
   IOS
   WEB
+}
+
+enum CustomerSortField {
+  CREATED_AT
+  TOTAL_SPENT
+  TOTAL_ORDERS
+  LAST_ACTIVE
+}
+
+enum SortOrder {
+  ASC
+  DESC
 }
 
 input GeocodeAddressInput {
@@ -595,6 +725,15 @@ input GetMyOrdersInput {
   status: OrderStatus
 }
 
+input GetAllOrdersInput {
+  page: Int! = 1
+  limit: Int! = 10
+  status: OrderStatus
+  startDate: DateTime
+  endDate: DateTime
+  userSearch: String
+}
+
 type Mutation {
   createProduct(input: CreateProductInput!): Product!
   updateProduct(id: ID!, input: UpdateProductInput!): Product!
@@ -611,9 +750,15 @@ type Mutation {
   updateCategory(id: ID!, input: UpdateCategoryInput!): Category!
   archiveCategory(id: ID!): Category!
   unarchiveCategory(id: ID!): Category!
+  addProductsToCategory(input: AddProductsToCategoryInput!): Boolean!
+  removeProductsFromCategory(input: RemoveProductsFromCategoryInput!): Boolean!
   adminLogin(email: String!, password: String!): String!
   createAdmin(email: String!, password: String!): String!
   adminLogout: String!
+  updateUserActivity: Boolean!
+  createAddress(input: CreateAddressInput!): Address!
+  updateAddress(id: ID!, input: UpdateAddressInput!): Address!
+  deleteAddress(id: ID!): Address!
   createBanner(input: CreateBannerInput!): Banner!
   updateBanner(id: ID!, input: UpdateBannerInput!): Banner!
   deleteBanner(id: ID!): Banner!
@@ -630,13 +775,12 @@ type Mutation {
   removeCoupon: Cart!
   createCoupon(input: CreateCouponInput!): Coupon!
   createOrUpdateCharges(input: CreateChargesInput!): Charges!
-  createAddress(input: CreateAddressInput!): Address!
-  updateAddress(id: ID!, input: UpdateAddressInput!): Address!
-  deleteAddress(id: ID!): Address!
   initiatePayment(input: InitiatePaymentInput!): InitiatePaymentResponse!
   initiateUpiQrPayment(input: InitiateUpiQrPaymentInput!): InitiateUpiQrPaymentResponse!
   processRefund(input: ProcessRefundInput!): RefundResponse!
   cancelOrder(input: CancelOrderInput!): OrderType!
+  subscribeNewsletter(input: SubscribeNewsletterInput!): SubscribeNewsletterResponse!
+  unsubscribeNewsletter(email: String!): SubscribeNewsletterResponse!
   sendOtp(phoneNumber: String!): String!
   verifyWhatsAppOtp(phoneNumber: String!, otp: String!, input: CreateUserInput): String!
   verifyOtpAndLogin(idToken: String!, input: CreateUserInput): String!
@@ -648,7 +792,7 @@ input CreateProductInput {
   slug: String
   favourite: Boolean
   description: String!
-  categoryId: String!
+  categoryIds: [String!]!
   brand: String!
   gtin: String
   mpn: String
@@ -706,7 +850,7 @@ input UpdateProductInput {
   name: String
   slug: String
   description: String
-  categoryId: String
+  categoryIds: [String!]
   favourite: Boolean
   brand: String
   gtin: String
@@ -769,6 +913,54 @@ input UpdateCategoryInput {
   codeValue: String
   inCodeSet: String
   isArchived: Boolean
+}
+
+input AddProductsToCategoryInput {
+  categoryId: ID!
+  productIds: [ID!]!
+}
+
+input RemoveProductsFromCategoryInput {
+  categoryId: ID!
+  productIds: [ID!]!
+}
+
+input CreateAddressInput {
+  addressType: String!
+  recipientPhone: String!
+  recipientName: String!
+  buildingName: String!
+  floor: String
+  streetArea: String
+  landmark: String
+  addressLocality: String!
+  addressRegion: String!
+  postalCode: String!
+  addressCountry: String!
+  isDefault: Boolean
+  latitude: Float!
+  longitude: Float!
+  formattedAddress: String!
+  placeId: String
+}
+
+input UpdateAddressInput {
+  addressType: String
+  recipientPhone: String
+  recipientName: String
+  buildingName: String
+  floor: String
+  streetArea: String
+  landmark: String
+  addressLocality: String
+  addressRegion: String
+  postalCode: String
+  addressCountry: String
+  isDefault: Boolean
+  latitude: Float
+  longitude: Float
+  formattedAddress: String
+  placeId: String
 }
 
 input CreateBannerInput {
@@ -863,44 +1055,6 @@ input CreateChargesInput {
   deliveryRestBelowThreshold: Float!
 }
 
-input CreateAddressInput {
-  addressType: String!
-  recipientPhone: String!
-  recipientName: String!
-  buildingName: String!
-  floor: String
-  streetArea: String
-  landmark: String
-  addressLocality: String!
-  addressRegion: String!
-  postalCode: String!
-  addressCountry: String!
-  isDefault: Boolean
-  latitude: Float!
-  longitude: Float!
-  formattedAddress: String!
-  placeId: String
-}
-
-input UpdateAddressInput {
-  addressType: String
-  recipientPhone: String
-  recipientName: String
-  buildingName: String
-  floor: String
-  streetArea: String
-  landmark: String
-  addressLocality: String
-  addressRegion: String
-  postalCode: String
-  addressCountry: String
-  isDefault: Boolean
-  latitude: Float
-  longitude: Float
-  formattedAddress: String
-  placeId: String
-}
-
 input InitiatePaymentInput {
   cartId: String!
   amount: String!
@@ -923,6 +1077,11 @@ input ProcessRefundInput {
 input CancelOrderInput {
   orderId: String!
   reason: String
+}
+
+input SubscribeNewsletterInput {
+  email: String!
+  source: String
 }
 
 input CreateUserInput {

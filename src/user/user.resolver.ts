@@ -1,8 +1,8 @@
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { GetCustomersInput } from './user.input';
-import { PaginatedCustomersResponse } from './user.graphql';
+import { PaginatedCustomersResponse, CustomerDetails } from './user.graphql';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -22,12 +22,19 @@ export class UserResolver {
     return this.userService.getAllCustomers(input);
   }
 
+  @Query(() => CustomerDetails)
+  @Roles(Role.ADMIN)
+  @UseGuards(RolesGuard)
+  async getCustomerDetails(
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<CustomerDetails> {
+    return this.userService.getCustomerDetails(id);
+  }
+
   @Mutation(() => Boolean)
   @Roles(Role.USER)
   @UseGuards(DualAuthGuard, RolesGuard)
-  async updateUserActivity(
-    @OptionalUser() user: any,
-  ): Promise<boolean> {
+  async updateUserActivity(@OptionalUser() user: any): Promise<boolean> {
     if (!user?._id) {
       throw new Error('User identification required');
     }
