@@ -1,5 +1,6 @@
-import { Field, ObjectType, InputType, registerEnumType } from '@nestjs/graphql';
+import { Field, ObjectType, InputType, registerEnumType, Int } from '@nestjs/graphql';
 import { OrderStatus } from './order.schema';
+import { PaginationMeta } from '../../common/pagination';
 
 registerEnumType(OrderStatus, {
   name: 'OrderStatus',
@@ -24,6 +25,27 @@ export class OrderItemType {
 
   @Field()
   sku: string;
+}
+
+@ObjectType()
+export class OrderUserInfo {
+  @Field()
+  identityId: string;
+
+  @Field({ nullable: true })
+  phoneNumber?: string;
+
+  @Field({ nullable: true })
+  email?: string;
+
+  @Field({ nullable: true })
+  firstName?: string;
+
+  @Field({ nullable: true })
+  lastName?: string;
+
+  @Field()
+  status: string;
 }
 
 @ObjectType()
@@ -78,6 +100,45 @@ export class OrderType {
 }
 
 @ObjectType()
+export class OrderWithUserInfo extends OrderType {
+  @Field(() => OrderUserInfo, { nullable: true })
+  userInfo?: OrderUserInfo;
+}
+
+@ObjectType()
+export class OrderStatusCount {
+  @Field(() => Int)
+  pending: number;
+
+  @Field(() => Int)
+  confirmed: number;
+
+  @Field(() => Int)
+  processing: number;
+
+  @Field(() => Int)
+  shipped: number;
+
+  @Field(() => Int)
+  delivered: number;
+
+  @Field(() => Int)
+  cancelled: number;
+
+  @Field(() => Int)
+  refunded: number;
+}
+
+@ObjectType()
+export class OrdersSummary {
+  @Field(() => Int)
+  totalOrders: number;
+
+  @Field(() => OrderStatusCount)
+  statusCounts: OrderStatusCount;
+}
+
+@ObjectType()
 export class PaginatedOrdersResponse {
   @Field(() => [OrderType])
   orders: OrderType[];
@@ -93,4 +154,16 @@ export class PaginatedOrdersResponse {
 
   @Field()
   totalPages: number;
+}
+
+@ObjectType()
+export class AdminOrdersResponse {
+  @Field(() => [OrderWithUserInfo])
+  orders: OrderWithUserInfo[];
+
+  @Field(() => PaginationMeta)
+  meta: PaginationMeta;
+
+  @Field(() => OrdersSummary)
+  summary: OrdersSummary;
 }

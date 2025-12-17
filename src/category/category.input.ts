@@ -59,3 +59,21 @@ export class UpdateCategoryInput {
   @Field({ nullable: true })
   isArchived?: boolean;
 }
+
+@InputType()
+export class AddProductsToCategoryInput {
+  @Field(() => ID)
+  categoryId: string;
+
+  @Field(() => [ID])
+  productIds: string[];
+}
+
+@InputType()
+export class RemoveProductsFromCategoryInput {
+  @Field(() => ID)
+  categoryId: string;
+
+  @Field(() => [ID])
+  productIds: string[];
+}

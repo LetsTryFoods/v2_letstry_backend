@@ -124,9 +124,9 @@ export class Product {
   @Field()
   description: string;
 
-  @Prop({ required: true })
-  @Field()
-  categoryId: string;
+  @Prop({ type: [String], required: true, default: [] })
+  @Field(() => [String])
+  categoryIds: string[];
 
   @Prop({ required: true })
   @Field()
@@ -219,7 +219,7 @@ ProductSchema.set('toJSON', {
   },
 });
 
-ProductSchema.index({ categoryId: 1 });
+ProductSchema.index({ categoryIds: 1 });
 ProductSchema.index({ 'variants.sku': 1 });
 ProductSchema.index({ 'variants._id': 1 });
 ProductSchema.index({ keywords: 1 });

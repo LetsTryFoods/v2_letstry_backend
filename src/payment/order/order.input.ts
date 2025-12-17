@@ -1,6 +1,7 @@
 import { InputType, Field } from '@nestjs/graphql';
 import { IsNotEmpty, IsString, IsOptional, IsNumber, Min, IsEnum } from 'class-validator';
 import { OrderStatus } from './order.schema';
+import { PaginationInput } from '../../common/pagination';
 
 @InputType()
 export class GetOrderByIdInput {
@@ -28,6 +29,27 @@ export class GetMyOrdersInput {
   @IsOptional()
   @IsEnum(OrderStatus)
   status?: OrderStatus;
+}
+
+@InputType()
+export class GetAllOrdersInput extends PaginationInput {
+  @Field(() => OrderStatus, { nullable: true })
+  @IsOptional()
+  @IsEnum(OrderStatus)
+  status?: OrderStatus;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  startDate?: Date;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  endDate?: Date;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  userSearch?: string;
 }
 
 @InputType()

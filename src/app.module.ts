@@ -21,6 +21,7 @@ import { CouponModule } from './coupon/coupon.module';
 import { ChargesModule } from './charges/charges.module';
 import { AddressModule } from './address/address.module';
 import { PaymentModule } from './payment/payment.module';
+import { NewsletterModule } from './newsletter/newsletter.module';
 
 
 @Module({
@@ -39,6 +40,7 @@ import { PaymentModule } from './payment/payment.module';
     ChargesModule,
     AddressModule,
     PaymentModule,
+    NewsletterModule,
     AuthenticationModule,
     AppCacheModule,
   ],

@@ -47,6 +47,7 @@ export class UserAuthService {
     const { registered, guests } = this.categorizeIdentities(allIdentitiesWithPhone);
 
     if (registered) {
+      await this.updateLoginTimestamp(registered._id.toString());
       await this.mergeAllGuestsIntoRegistered(registered._id.toString(), guests, sessionId);
       return this.generateSimpleAuthToken(this.mapIdentityToUser(registered));
     }
@@ -70,6 +71,7 @@ export class UserAuthService {
       const { registered, guests } = this.categorizeIdentities(allIdentitiesWithPhone);
 
       if (registered) {
+        await this.updateLoginTimestamp(registered._id.toString());
         await this.mergeAllGuestsIntoRegistered(registered._id.toString(), guests, sessionId);
         const registeredUser = this.mapIdentityToUser(registered);
         return this.generateAuthToken(registeredUser, firebaseUid);
@@ -151,7 +153,27 @@ export class UserAuthService {
     if (!user || !user.isPhoneVerified) {
       return null;
     }
+    
+    await this.updateUserLastActive(payload.sub);
+    
     return { ...user, role: Role.USER };
+  }
+
+  private async updateUserLastActive(userId: string): Promise<void> {
+    await this.identityModel.updateOne(
+      { _id: userId },
+      { lastActiveAt: new Date() }
+    ).exec();
+  }
+
+  private async updateLoginTimestamp(userId: string): Promise<void> {
+    await this.identityModel.updateOne(
+      { _id: userId },
+      { 
+        lastLoginAt: new Date(),
+        lastActiveAt: new Date()
+      }
+    ).exec();
   }
 
   private async validateOtp(phoneNumber: string, otp: string): Promise<void> {

@@ -220,12 +220,13 @@ export class ProductResolver {
     return product.variants.find(v => v._id === variantId) || null;
   }
 
-  @ResolveField(() => Category, { name: 'category', nullable: true })
-  async getCategory(@Parent() product: Product): Promise<Category | null> {
-    if (!product.categoryId) return null;
-    return (await this.categoryLoader.batchCategories.load(
-      product.categoryId,
-    )) as any;
+  @ResolveField(() => [Category], { name: 'categories', nullable: true })
+  async getCategories(@Parent() product: Product): Promise<Category[]> {
+    if (!product.categoryIds || product.categoryIds.length === 0) return [];
+    const categories = await Promise.all(
+      product.categoryIds.map(id => this.categoryLoader.batchCategories.load(id))
+    );
+    return categories.filter(c => c !== null) as any[];
   }
 
   @ResolveField(() => ProductVariant, { name: 'defaultVariant', nullable: true })

@@ -9,7 +9,7 @@ import {
 } from '@nestjs/graphql';
 import { CategoryService } from './category.service';
 import { Category } from './category.graphql';
-import { CreateCategoryInput, UpdateCategoryInput } from './category.input';
+import { CreateCategoryInput, UpdateCategoryInput, AddProductsToCategoryInput, RemoveProductsFromCategoryInput } from './category.input';
 import { Public } from '../common/decorators/public.decorator';
 import { ProductService } from '../product/product.service';
 import { Product } from '../product/product.graphql';
@@ -155,6 +155,23 @@ export class CategoryResolver {
   ): Promise<Category> {
     return this.categoryService.unarchive(id) as any;
   }
+
+  @Mutation(() => Boolean, { name: 'addProductsToCategory' })
+  @Roles(Role.ADMIN)
+  async addProductsToCategory(
+    @Args('input') input: AddProductsToCategoryInput,
+  ): Promise<boolean> {
+    return this.categoryService.addProductsToCategory(input.categoryId, input.productIds);
+  }
+
+  @Mutation(() => Boolean, { name: 'removeProductsFromCategory' })
+  @Roles(Role.ADMIN)
+  async removeProductsFromCategory(
+    @Args('input') input: RemoveProductsFromCategoryInput,
+  ): Promise<boolean> {
+    return this.categoryService.removeProductsFromCategory(input.categoryId, input.productIds);
+  }
+
   @ResolveField(() => [Product], { name: 'products' })
   @Roles(Role.ADMIN)
   async getProducts(@Parent() category: Category): Promise<Product[]> {

@@ -16,7 +16,6 @@ export class CacheInvalidatorService {
    * Invalidate cache when a product is created, updated, or deleted.
    */
   async invalidateProduct(newProduct: Product, oldProduct?: Product) {
-    // 1. Invalidate Product Detail (ID and Slug)
     if (newProduct._id) {
         await this.cacheService.bumpVersion(this.cacheKeyFactory.getProductDetailVersionKey(newProduct._id.toString()));
     }
@@ -24,21 +23,23 @@ export class CacheInvalidatorService {
         await this.cacheService.bumpVersion(this.cacheKeyFactory.getProductDetailVersionKey(newProduct.slug));
     }
 
-    // 2. Invalidate Global List
     await this.cacheService.bumpVersion(this.cacheKeyFactory.getProductGlobalListVersionKey());
 
-    // 3. Invalidate List for New Category
-    if (newProduct.categoryId) {
-         const listVersionKey = this.cacheKeyFactory.getProductListVersionKey(newProduct.categoryId);
-         await this.cacheService.bumpVersion(listVersionKey);
+    if (newProduct.categoryIds && newProduct.categoryIds.length > 0) {
+      for (const categoryId of newProduct.categoryIds) {
+        const listVersionKey = this.cacheKeyFactory.getProductListVersionKey(categoryId);
+        await this.cacheService.bumpVersion(listVersionKey);
+      }
     }
 
-    // 4. Invalidate List for Old Category (if changed)
-    if (oldProduct && oldProduct.categoryId !== newProduct.categoryId) {
-       if (oldProduct.categoryId) {
-          const oldListVersionKey = this.cacheKeyFactory.getProductListVersionKey(oldProduct.categoryId);
-          await this.cacheService.bumpVersion(oldListVersionKey);
-       }
+    if (oldProduct && oldProduct.categoryIds) {
+      const removedCategories = oldProduct.categoryIds.filter(
+        id => !newProduct.categoryIds || !newProduct.categoryIds.includes(id)
+      );
+      for (const categoryId of removedCategories) {
+        const oldListVersionKey = this.cacheKeyFactory.getProductListVersionKey(categoryId);
+        await this.cacheService.bumpVersion(oldListVersionKey);
+      }
     }
   }
 

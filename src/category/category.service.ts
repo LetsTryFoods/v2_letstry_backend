@@ -392,6 +392,7 @@ export class CategoryCommandService {
     private readonly repository: CategoryRepository,
     private readonly slugService: SlugService,
     private readonly cacheInvalidator: CacheInvalidatorService,
+    private readonly productModel?: Model<any>,
   ) {}
 
   async create(input: CreateCategoryInput): Promise<Category> {
@@ -451,6 +452,93 @@ export class CategoryCommandService {
 
   async decrementProductCount(id: string): Promise<void> {
     await this.updateProductCount(id, -1);
+  }
+
+  async addProductsToCategory(categoryId: string, productIds: string[]): Promise<boolean> {
+    await this.validateCategoryExists(categoryId);
+    await this.validateProductsExist(productIds);
+
+    const result = await this.addCategoryToProducts(categoryId, productIds);
+    await this.updateCategoryProductCount(categoryId);
+    await this.invalidateCategoryCache(categoryId);
+
+    return result;
+  }
+
+  async removeProductsFromCategory(categoryId: string, productIds: string[]): Promise<boolean> {
+    await this.validateCategoryExists(categoryId);
+
+    const result = await this.removeCategoryFromProducts(categoryId, productIds);
+    await this.updateCategoryProductCount(categoryId);
+    await this.invalidateCategoryCache(categoryId);
+
+    return result;
+  }
+
+  private async validateCategoryExists(categoryId: string): Promise<void> {
+    const category = await this.repository.findById(categoryId);
+    if (!category) {
+      throw new NotFoundException(`Category with id ${categoryId} not found`);
+    }
+  }
+
+  private async validateProductsExist(productIds: string[]): Promise<void> {
+    if (!this.productModel) {
+      throw new Error('Product model not available');
+    }
+
+    const products = await this.productModel.find({ _id: { $in: productIds } }).exec();
+    if (products.length !== productIds.length) {
+      throw new NotFoundException('One or more products not found');
+    }
+  }
+
+  private async addCategoryToProducts(categoryId: string, productIds: string[]): Promise<boolean> {
+    if (!this.productModel) {
+      throw new Error('Product model not available');
+    }
+
+    const result = await this.productModel.updateMany(
+      { _id: { $in: productIds } },
+      { $addToSet: { categoryIds: categoryId } }
+    ).exec();
+
+    return result.modifiedCount > 0;
+  }
+
+  private async removeCategoryFromProducts(categoryId: string, productIds: string[]): Promise<boolean> {
+    if (!this.productModel) {
+      throw new Error('Product model not available');
+    }
+
+    const result = await this.productModel.updateMany(
+      { _id: { $in: productIds } },
+      { $pull: { categoryIds: categoryId } }
+    ).exec();
+
+    return result.modifiedCount > 0;
+  }
+
+  private async updateCategoryProductCount(categoryId: string): Promise<void> {
+    if (!this.productModel) {
+      return;
+    }
+
+    const count = await this.productModel.countDocuments({
+      categoryIds: categoryId
+    }).exec();
+
+    await this.repository.updateOne(
+      { _id: categoryId },
+      { productCount: count }
+    );
+  }
+
+  private async invalidateCategoryCache(categoryId: string): Promise<void> {
+    const category = await this.repository.findById(categoryId);
+    if (category) {
+      await this.cacheInvalidator.invalidateCategory(category.slug);
+    }
   }
 
   private async resolveSlug(name: string, providedSlug?: string): Promise<string> {
@@ -519,6 +607,7 @@ export class CategoryService {
 
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
+    @InjectModel('Product') private productModel: Model<any>,
     private readonly slugService: SlugService,
     private readonly cacheService: CacheService,
     private readonly cacheKeyFactory: CacheKeyFactory,
@@ -541,6 +630,7 @@ export class CategoryService {
       repository,
       slugService,
       cacheInvalidatorService,
+      productModel,
     );
   }
 
@@ -571,6 +661,14 @@ export class CategoryService {
 
   async decrementProductCount(id: string): Promise<void> {
     return this.commandService.decrementProductCount(id);
+  }
+
+  async addProductsToCategory(categoryId: string, productIds: string[]): Promise<boolean> {
+    return this.commandService.addProductsToCategory(categoryId, productIds);
+  }
+
+  async removeProductsFromCategory(categoryId: string, productIds: string[]): Promise<boolean> {
+    return this.commandService.removeProductsFromCategory(categoryId, productIds);
   }
 
   // ========== READ OPERATIONS ==========
