@@ -825,7 +825,6 @@ input InitiatePaymentInput {
   cartId: String!
   amount: String!
   currency: String!
-  returnUrl: String
 }
 
 input InitiateUpiQrPaymentInput {
@@ -833,7 +832,6 @@ input InitiateUpiQrPaymentInput {
   buyerEmail: String!
   buyerName: String!
   buyerPhone: String!
-  returnUrl: String
 }
 
 input ProcessRefundInput {

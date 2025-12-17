@@ -1,4 +1,5 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PaymentExecutorService } from './payment-executor.service';
 import { ZaakpayService } from './zaakpay.service';
 import { PaymentLoggerService } from './payment-logger.service';
@@ -10,6 +11,7 @@ export class PaymentController {
     private readonly paymentExecutorService: PaymentExecutorService,
     private readonly zaakpayService: ZaakpayService,
     private readonly paymentLogger: PaymentLoggerService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @Post('webhook')
@@ -44,11 +46,13 @@ export class PaymentController {
           cardNumber: txnData.cardNumber,
           pspRawResponse: txnData,
         });
+        this.emitPaymentStatusEvent(paymentOrderId, 'SUCCESS', 'Payment completed successfully');
       } else if (responseCode === '200' || responseCode === '300') {
         await this.paymentExecutorService.handlePaymentPending({
           paymentOrderId,
           pspResponseMessage: txnData.responseDescription,
         });
+        this.emitPaymentStatusEvent(paymentOrderId, 'PENDING', txnData.responseDescription);
       } else {
         await this.paymentExecutorService.handlePaymentFailure({
           paymentOrderId,
@@ -57,6 +61,7 @@ export class PaymentController {
           pspResponseMessage: txnData.responseDescription,
           pspRawResponse: txnData,
         });
+        this.emitPaymentStatusEvent(paymentOrderId, 'FAILED', txnData.responseDescription || 'Payment failed');
       }
 
       return 'SUCCESS';
@@ -91,5 +96,17 @@ export class PaymentController {
     };
     
     return methodMap[method] || 'CREDIT_CARD';
+  }
+
+  private emitPaymentStatusEvent(paymentOrderId: string, status: string, message?: string): void {
+    this.eventEmitter.emit('payment.status.updated', {
+      paymentOrderId,
+      status,
+      message,
+    });
+    this.paymentLogger.log('Payment status event emitted', {
+      paymentOrderId,
+      status,
+    });
   }
 }

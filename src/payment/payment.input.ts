@@ -23,11 +23,6 @@ export class InitiatePaymentInput {
   @IsNotEmpty()
   @IsString()
   currency: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  returnUrl?: string;
 }
 
 @InputType()
@@ -102,9 +97,4 @@ export class InitiateUpiQrPaymentInput {
   @IsNotEmpty()
   @IsString()
   buyerPhone: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  returnUrl?: string;
 }

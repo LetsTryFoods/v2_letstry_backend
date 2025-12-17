@@ -15,18 +15,22 @@ interface ZaakPayConfig {
 export class ZaakpayService {
   private config: ZaakPayConfig;
   private baseUrl: string;
+  private environment: string;
+  private isProduction: boolean;
+  private mode: string;
 
   constructor(
     private configService: ConfigService,
     private paymentLogger: PaymentLoggerService,
   ) {
-    const environment =
+    this.environment =
       this.configService.get<string>('zaakpay.environment') || 'staging';
-    const isProduction = environment === 'production';
+    this.isProduction = this.environment === 'production';
+    this.mode = this.isProduction ? '1' : '0';
 
-    // Force usage of api.zaakpay.com as credentials seem to be for this environment
-    // even if environment is set to staging in config
-    this.baseUrl = 'https://api.zaakpay.com';
+    this.baseUrl =
+      this.configService.get<string>('zaakpay.baseUrl') ||
+      'https://zaakstaging.zaakpay.com';
 
     this.config = {
       merchantId:
@@ -37,7 +41,7 @@ export class ZaakpayService {
     };
 
     this.paymentLogger.log('ZaakPay service initialized', {
-      environment,
+      environment: this.environment,
       baseUrl: this.baseUrl,
       checkoutUrl: this.config.checkoutUrl,
     });
@@ -65,39 +69,18 @@ export class ZaakpayService {
     returnUrl: string;
     paymentMode?: string;
   }): Promise<{ checkoutUrl: string; checksumData: any }> {
-    const amountInPaisa = Math.round(
-      parseFloat(params.amount) * 100,
-    ).toString();
+    const amountInPaisa = this.convertToRupeesPaisa(params.amount);
 
-    const environment =
-      this.configService.get<string>('zaakpay.environment') || 'staging';
-    const isProduction = environment === 'production';
-
-    const mode = isProduction ? '1' : '0';
-
-    const payload: any = {
-      merchantIdentifier: this.config.merchantId,
-      mode: mode,
-      merchantIpAddress: '127.0.0.1',
-      debitorcredit: 'upi',
-      orderDetail: {
-        orderId: params.orderId,
-        amount: amountInPaisa,
-        currency: 'INR',
-        productDescription: params.productDescription,
-        email: params.buyerEmail,
-        phone: params.buyerPhone,
-        txnDate: new Date().toISOString().split('T')[0],
-        purpose: '1',
-      },
+    const payload = this.buildPaymentPayload({
+      orderId: params.orderId,
+      amount: amountInPaisa,
+      buyerEmail: params.buyerEmail,
+      buyerPhone: params.buyerPhone,
+      productDescription: params.productDescription,
       returnUrl: params.returnUrl,
-    };
-
-    if (params.paymentMode === 'upiqr') {
-      payload.paymentInstrument = {
-        paymentMode: 'upiqr',
-      };
-    }
+      mode: this.mode,
+      paymentMode: params.paymentMode,
+    });
 
     const jsonPayload = JSON.stringify(payload);
     const checksum = this.generateChecksum(jsonPayload);
@@ -113,58 +96,14 @@ export class ZaakpayService {
       orderId: params.orderId,
       amount: params.amount,
       amountInPaisa,
-      mode,
+      mode: this.mode,
       checkoutUrl: this.config.checkoutUrl,
       returnUrl: params.returnUrl,
-      environment: isProduction ? 'production' : 'staging',
+      environment: this.isProduction ? 'production' : 'staging',
     });
 
     if (params.paymentMode === 'upiqr') {
-      try {
-        const formData = new URLSearchParams();
-        formData.append('data', jsonPayload);
-        formData.append('checksum', checksum);
-
-        this.paymentLogger.log('Calling ZaakPay for UPI QR', {
-          url: this.config.checkoutUrl,
-          orderId: params.orderId,
-        });
-
-        const response = await axios.post(
-          this.config.checkoutUrl,
-          formData.toString(),
-          {
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-          },
-        );
-
-        this.paymentLogger.logPSPResponse({
-          endpoint: '/transactU?v=8',
-          status: response.status,
-          response: response.data,
-        });
-
-        return {
-          checkoutUrl: this.config.checkoutUrl,
-          checksumData: {
-            ...response.data,
-            sentData: jsonPayload,
-            sentChecksum: checksum,
-          },
-        };
-      } catch (error) {
-        this.paymentLogger.error(
-          'ZaakPay UPI QR API call failed',
-          error.stack,
-          {
-            orderId: params.orderId,
-            error: error.message,
-          },
-        );
-        throw error;
-      }
+      return this.initiateUpiQrPayment(jsonPayload, checksum, params.orderId);
     }
 
     return {
@@ -182,7 +121,7 @@ export class ZaakpayService {
   }): Promise<any> {
     const data = {
       merchantIdentifier: this.config.merchantId,
-      mode: '0',
+      mode: this.mode,
       orderDetail: {
         orderId: params.orderId,
       },
@@ -203,17 +142,10 @@ export class ZaakpayService {
     });
 
     try {
-      const response = await axios.post(
-        `${this.config.apiUrl}/checkTxn?v=5`,
-        new URLSearchParams({
-          data: dataString,
-          checksum: checksum,
-        }).toString(),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        },
+      const response = await this.makeZaakPayRequest(
+        '/checkTxn?v=5',
+        dataString,
+        checksum,
       );
 
       this.paymentLogger.logPSPResponse({
@@ -224,11 +156,9 @@ export class ZaakpayService {
 
       return response.data;
     } catch (error) {
-      this.paymentLogger.error('Check transaction status failed', error.stack, {
+      this.handleZaakPayError(error, 'Check transaction status failed', {
         orderId: params.orderId,
-        error: error.message,
       });
-      throw error;
     }
   }
 
@@ -244,17 +174,14 @@ export class ZaakpayService {
       orderDetail: {
         orderId: params.orderId,
       },
-      mode: '0',
+      mode: this.mode,
       updateDesired: params.isPartialRefund ? '22' : '14',
       updateReason: params.updateReason,
       merchantRefId: params.merchantRefId,
     };
 
     if (params.isPartialRefund && params.amount) {
-      const amountInPaisa = Math.round(
-        parseFloat(params.amount) * 100,
-      ).toString();
-      data.orderDetail.amount = amountInPaisa;
+      data.orderDetail.amount = this.convertToRupeesPaisa(params.amount);
     }
 
     const dataString = JSON.stringify(data);
@@ -267,17 +194,10 @@ export class ZaakpayService {
     });
 
     try {
-      const response = await axios.post(
-        `${this.config.apiUrl}/updateTxn`,
-        new URLSearchParams({
-          data: dataString,
-          checksum: checksum,
-        }).toString(),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        },
+      const response = await this.makeZaakPayRequest(
+        '/updateTxn',
+        dataString,
+        checksum,
       );
 
       this.paymentLogger.logPSPResponse({
@@ -288,11 +208,176 @@ export class ZaakpayService {
 
       return response.data;
     } catch (error) {
-      this.paymentLogger.error('Refund initiation failed', error.stack, {
+      this.handleZaakPayError(error, 'Refund initiation failed', {
         orderId: params.orderId,
-        error: error.message,
       });
-      throw error;
     }
+  }
+
+  async getSettlementReport(date: string): Promise<any> {
+    const data = {
+      merchantIdentifier: this.config.merchantId,
+      mode: this.mode,
+      settlementDate: date,
+    };
+
+    const dataString = JSON.stringify(data);
+    const checksum = this.generateChecksum(dataString);
+
+    this.paymentLogger.logPSPRequest({
+      endpoint: '/getSettlementReport',
+      method: 'POST',
+      payload: { data: dataString, checksum },
+    });
+
+    try {
+      const response = await this.makeZaakPayRequest(
+        '/getSettlementReport',
+        dataString,
+        checksum,
+      );
+
+      this.paymentLogger.logPSPResponse({
+        endpoint: '/getSettlementReport',
+        status: response.status,
+        response: response.data,
+      });
+
+      return response.data;
+    } catch (error) {
+      this.handleZaakPayError(error, 'Get settlement report failed', {
+        date,
+      });
+    }
+  }
+
+  private convertToRupeesPaisa(amount: string): string {
+    return Math.round(parseFloat(amount) * 100).toString();
+  }
+
+  private buildPaymentPayload(params: {
+    orderId: string;
+    amount: string;
+    buyerEmail: string;
+    buyerPhone: string;
+    productDescription: string;
+    returnUrl: string;
+    mode: string;
+    paymentMode?: string;
+  }): any {
+    const payload: any = {
+      merchantIdentifier: this.config.merchantId,
+      mode: params.mode,
+      merchantIpAddress: '127.0.0.1',
+      debitorcredit: 'upi',
+      orderDetail: {
+        orderId: params.orderId,
+        amount: params.amount,
+        currency: 'INR',
+        productDescription: params.productDescription,
+        email: params.buyerEmail,
+        phone: params.buyerPhone,
+        txnDate: new Date().toISOString().split('T')[0],
+        purpose: '1',
+      },
+      returnUrl: params.returnUrl,
+    };
+
+    if (params.paymentMode === 'upiqr') {
+      payload.paymentInstrument = {
+        paymentMode: 'upiqr',
+      };
+    } else if (params.paymentMode === 'card') {
+      payload.paymentInstrument = {
+        paymentMode: 'card',
+      };
+    } else if (params.paymentMode === 'netbanking') {
+      payload.paymentInstrument = {
+        paymentMode: 'netbanking',
+      };
+    } else if (params.paymentMode === 'wallet') {
+      payload.paymentInstrument = {
+        paymentMode: 'wallet',
+      };
+    }
+
+    return payload;
+  }
+
+  private async initiateUpiQrPayment(
+    jsonPayload: string,
+    checksum: string,
+    orderId: string,
+  ): Promise<{ checkoutUrl: string; checksumData: any }> {
+    try {
+      const formData = new URLSearchParams();
+      formData.append('data', jsonPayload);
+      formData.append('checksum', checksum);
+
+      this.paymentLogger.log('Calling ZaakPay for UPI QR', {
+        url: this.config.checkoutUrl,
+        orderId,
+      });
+
+      const response = await axios.post(
+        this.config.checkoutUrl,
+        formData.toString(),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        },
+      );
+
+      this.paymentLogger.logPSPResponse({
+        endpoint: '/transactU?v=8',
+        status: response.status,
+        response: response.data,
+      });
+
+      return {
+        checkoutUrl: this.config.checkoutUrl,
+        checksumData: {
+          ...response.data,
+          sentData: jsonPayload,
+          sentChecksum: checksum,
+        },
+      };
+    } catch (error) {
+      this.handleZaakPayError(error, 'ZaakPay UPI QR API call failed', {
+        orderId,
+      });
+    }
+  }
+
+  private async makeZaakPayRequest(
+    endpoint: string,
+    dataString: string,
+    checksum: string,
+  ): Promise<any> {
+    return axios.post(
+      `${this.config.apiUrl}${endpoint}`,
+      new URLSearchParams({
+        data: dataString,
+        checksum: checksum,
+      }).toString(),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      },
+    );
+  }
+
+  private handleZaakPayError(
+    error: any,
+    context: string,
+    additionalInfo: any,
+  ): never {
+    this.paymentLogger.error(context, error.stack, {
+      ...additionalInfo,
+      error: error.message,
+    });
+    throw error;
   }
 }

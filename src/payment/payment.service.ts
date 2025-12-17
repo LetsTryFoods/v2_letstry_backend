@@ -33,35 +33,19 @@ export class PaymentService {
 
   async initiatePayment(identityId: string, input: InitiatePaymentInput) {
     try {
-      const paymentEvent = await this.paymentEventModel.create({
+      const paymentEvent = await this.createPaymentEvent({
         cartId: input.cartId,
         identityId,
-        totalAmount: input.amount,
-        currency: input.currency,
-        isPaymentDone: false,
-      });
-
-      this.paymentLogger.logPaymentInitiation({
-        paymentOrderId: paymentEvent._id.toString(),
-        userId: identityId,
         amount: input.amount,
         currency: input.currency,
       });
 
-      const paymentOrder = await this.paymentOrderModel.create({
-        paymentOrderId: `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      const paymentOrder = await this.createPaymentOrder({
         paymentEventId: paymentEvent._id.toString(),
         identityId,
         amount: input.amount,
         currency: input.currency,
-        paymentOrderStatus: PaymentStatus.NOT_STARTED,
-        retryCount: 0,
       });
-
-      const returnUrl =
-        input.returnUrl ||
-        this.configService.get<string>('zaakpay.returnUrl') ||
-        '';
 
       const checkoutData =
         await this.paymentExecutorService.executePaymentOrder({
@@ -73,7 +57,7 @@ export class PaymentService {
           buyerName: 'Customer',
           buyerPhone: '9999999999',
           productDescription: 'Order Payment',
-          returnUrl,
+          returnUrl: this.getReturnUrl(),
         });
 
       return {
@@ -82,14 +66,7 @@ export class PaymentService {
         checksumData: checkoutData.checksumData,
       };
     } catch (error) {
-      this.paymentLogger.logPaymentFailure({
-        paymentOrderId: 'N/A',
-        reason: `Initiation failed: ${error.message}`,
-        pspResponseCode: 'N/A',
-      });
-      throw new BadRequestException(
-        `Failed to initiate payment: ${error.message}`,
-      );
+      this.handlePaymentError(error, 'Initiation failed');
     }
   }
 
@@ -110,51 +87,34 @@ export class PaymentService {
       const amount = cart.totalsSummary.grandTotal.toFixed(2);
       const currency = 'INR';
 
-      const paymentEvent = await this.paymentEventModel.create({
+      const paymentEvent = await this.createPaymentEvent({
         cartId: input.cartId,
         identityId,
-        totalAmount: amount,
-        currency: currency,
-        isPaymentDone: false,
+        amount,
+        currency,
       });
 
-      this.paymentLogger.logPaymentInitiation({
-        paymentOrderId: paymentEvent._id.toString(),
-        userId: identityId,
-        amount: amount,
-        currency: currency,
-      });
-
-      const paymentOrder = await this.paymentOrderModel.create({
-        paymentOrderId: `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      const paymentOrder = await this.createPaymentOrder({
         paymentEventId: paymentEvent._id.toString(),
         identityId,
-        amount: amount,
-        currency: currency,
-        paymentOrderStatus: PaymentStatus.NOT_STARTED,
-        retryCount: 0,
+        amount,
+        currency,
       });
-
-      const returnUrl =
-        input.returnUrl ||
-        this.configService.get<string>('zaakpay.returnUrl') ||
-        '';
 
       const zaakpayResponse =
         await this.paymentExecutorService.executePaymentOrder({
           paymentOrderId: paymentOrder.paymentOrderId,
           identityId,
-          amount: amount,
-          currency: currency,
+          amount,
+          currency,
           buyerEmail: input.buyerEmail,
           buyerName: input.buyerName,
           buyerPhone: input.buyerPhone,
           productDescription: 'UPI QR Payment',
-          returnUrl,
+          returnUrl: this.getReturnUrl(),
           paymentMode: 'upiqr',
         });
 
-      // ZaakPay returns bankPostData.link with base64 QR code image
       const base64QrImage =
         zaakpayResponse.checksumData?.bankPostData?.link ||
         zaakpayResponse.checksumData?.link ||
@@ -174,22 +134,15 @@ export class PaymentService {
         qrCodeUrl: zaakpayResponse.checkoutUrl,
         expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
         zaakpayTxnId: paymentOrder.zaakpayTxnId,
-        amount: amount,
-        currency: currency,
+        amount,
+        currency,
         responseCode: zaakpayResponse.checksumData?.responseCode || '100',
         responseMessage:
           zaakpayResponse.checksumData?.responseDescription ||
           'UPI QR payment initiated successfully',
       };
     } catch (error) {
-      this.paymentLogger.logPaymentFailure({
-        paymentOrderId: 'N/A',
-        reason: `UPI QR Initiation failed: ${error.message}`,
-        pspResponseCode: 'N/A',
-      });
-      throw new BadRequestException(
-        `Failed to initiate UPI QR payment: ${error.message}`,
-      );
+      this.handlePaymentError(error, 'UPI QR Initiation failed');
     }
   }
 
@@ -287,5 +240,63 @@ export class PaymentService {
     }
 
     return paymentOrder;
+  }
+
+  private async createPaymentEvent(params: {
+    cartId: string;
+    identityId: string;
+    amount: string;
+    currency: string;
+  }) {
+    const paymentEvent = await this.paymentEventModel.create({
+      cartId: params.cartId,
+      identityId: params.identityId,
+      totalAmount: params.amount,
+      currency: params.currency,
+      isPaymentDone: false,
+    });
+
+    this.paymentLogger.logPaymentInitiation({
+      paymentOrderId: paymentEvent._id.toString(),
+      userId: params.identityId,
+      amount: params.amount,
+      currency: params.currency,
+    });
+
+    return paymentEvent;
+  }
+
+  private async createPaymentOrder(params: {
+    paymentEventId: string;
+    identityId: string;
+    amount: string;
+    currency: string;
+  }) {
+    return this.paymentOrderModel.create({
+      paymentOrderId: this.generatePaymentOrderId(),
+      paymentEventId: params.paymentEventId,
+      identityId: params.identityId,
+      amount: params.amount,
+      currency: params.currency,
+      paymentOrderStatus: PaymentStatus.NOT_STARTED,
+      retryCount: 0,
+    });
+  }
+
+  private generatePaymentOrderId(): string {
+    return `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  private getReturnUrl(): string {
+    return this.configService.get<string>('zaakpay.returnUrl') || '';
+  }
+
+  private handlePaymentError(error: any, context: string): never {
+    this.paymentLogger.logPaymentFailure({
+      paymentOrderId: 'N/A',
+      reason: `${context}: ${error.message}`,
+      pspResponseCode: 'N/A',
+    });
+    throw new BadRequestException(`Failed to ${context.toLowerCase()}: ${error.message}`);
   }
 }

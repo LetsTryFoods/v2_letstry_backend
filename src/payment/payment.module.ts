@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PaymentEvent, PaymentEventSchema } from './payment.schema';
 import { PaymentOrder, PaymentOrderSchema } from './payment.schema';
 import { Ledger, LedgerSchema } from './payment.schema';
@@ -23,11 +24,14 @@ import { OrderResolver } from './order/order.resolver';
 import { PaymentLoggerService } from './payment-logger.service';
 import { PaymentGatewayFactory } from './payment-gateway.factory';
 import { CartModule } from '../cart/cart.module';
+import { SseService } from './sse/sse.service';
+import { SseController } from './sse/sse.controller';
 
 @Module({
   imports: [
     ConfigModule,
     CartModule,
+    EventEmitterModule.forRoot(),
     MongooseModule.forFeature([
       { name: PaymentEvent.name, schema: PaymentEventSchema },
       { name: PaymentOrder.name, schema: PaymentOrderSchema },
@@ -38,7 +42,7 @@ import { CartModule } from '../cart/cart.module';
       { name: Identity.name, schema: IdentitySchema },
     ]),
   ],
-  controllers: [PaymentController],
+  controllers: [PaymentController, SseController],
   providers: [
     PaymentService,
     PaymentResolver,
@@ -50,6 +54,7 @@ import { CartModule } from '../cart/cart.module';
     OrderResolver,
     PaymentLoggerService,
     PaymentGatewayFactory,
+    SseService,
   ],
   exports: [PaymentService, OrderService],
 })

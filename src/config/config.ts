@@ -53,10 +53,9 @@ export default () => ({
     secretKey: process.env.ZAAKPAY_SECRET_KEY || 'a3833da3c2234d218568a690c1714e5d',
     returnUrl: process.env.ZAAKPAY_RETURN_URL || 'http://localhost:3000/payment/callback',
     environment: process.env.ZAAKPAY_ENVIRONMENT || 'staging',
-    baseUrl: {
-      staging: 'https://zaakstaging.zaakpay.com',
-      production: 'https://api.zaakpay.com',
-    },
+    baseUrl: (process.env.ZAAKPAY_ENVIRONMENT || 'staging') != 'production' 
+      ? 'https://api.zaakpay.com' 
+      : 'https://zaakstaging.zaakpay.com',
     endpoints: {
       expressCheckout: '/api/paymentTransact/V8',
       customCheckout: '/transactU?v=8',
