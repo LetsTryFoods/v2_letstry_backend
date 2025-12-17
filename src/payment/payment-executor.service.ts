@@ -162,12 +162,12 @@ export class PaymentExecutorService {
         currency: paymentOrder.currency,
         shippingAddressId: cart.shippingAddressId?.toString(),
         items: cart.items.map((item: any) => ({
-          productId: item.productId.toString(),
-          quantity: item.quantity,
-          price: item.price.toString(),
-          totalPrice: item.totalPrice.toString(),
-          name: item.name,
-          sku: item.sku,
+          productId: item.productId?.toString() || item.productId,
+          quantity: item.quantity || 0,
+          price: (item.unitPrice || item.price || 0).toString(),
+          totalPrice: item.totalPrice?.toString() || (item.quantity * (item.unitPrice || item.price || 0)).toString(),
+          name: item.name || 'Unknown Product',
+          sku: item.sku || 'N/A',
         })),
       });
 
