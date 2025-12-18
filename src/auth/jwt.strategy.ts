@@ -31,6 +31,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: any) {
     // Check if it's a new RBAC admin user (has roleSlug)
     if (payload.roleSlug) {
+      // ✅ For JWT with embedded permissions, return directly without DB query (AWS-style)
+      if (payload.permissions && Array.isArray(payload.permissions)) {
+        return {
+          _id: payload.sub,
+          email: payload.email,
+          role: payload.role,
+          roleId: payload.roleId,
+          roleSlug: payload.roleSlug,
+          permissions: payload.permissions, // ✅ Permissions from JWT token - NO DB QUERY!
+        };
+      }
+      // Fallback to DB query if no permissions in token (backward compatibility)
       return this.adminUserService.validateJwtPayload(payload);
     }
     

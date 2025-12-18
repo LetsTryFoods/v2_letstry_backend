@@ -247,6 +247,10 @@ export class AdminUserService implements OnModuleInit {
 
   // ============ AUTH METHODS ============
 
+  /**
+   * AWS-Style Login with JWT Permissions
+   * Embeds permissions directly in JWT token for fast access without DB queries
+   */
   async login(input: AdminLoginInput): Promise<AdminAuthResponse> {
     const user = await this.userModel
       .findOne({ email: input.email })
@@ -292,16 +296,19 @@ export class AdminUserService implements OnModuleInit {
       }))
       .sort((a: AdminPermissionResponse, b: AdminPermissionResponse) => a.sortOrder - b.sortOrder);
 
-    // Generate JWT
+    // ✅ Generate JWT with embedded permissions (AWS-style)
     const payload = {
       sub: user._id,
       email: user.email,
       role: 'admin', // Keep for backward compatibility with existing guards
       roleId: role._id,
       roleSlug: role.slug,
+      permissions, // ✅ Store permissions in JWT token for fast access
     };
 
     const accessToken = this.jwtService.sign(payload);
+
+    this.logger.log(`User ${user.email} logged in successfully with ${permissions.length} permissions`);
 
     return {
       accessToken,
@@ -314,7 +321,24 @@ export class AdminUserService implements OnModuleInit {
     };
   }
 
+  /**
+   * Validate JWT Payload
+   * For backward compatibility - returns user with permissions from JWT if available
+   */
   async validateJwtPayload(payload: any): Promise<any> {
+    // ✅ If permissions are in JWT, use them directly (fast path)
+    if (payload.permissions && Array.isArray(payload.permissions)) {
+      return {
+        _id: payload.sub,
+        email: payload.email,
+        role: payload.role,
+        roleId: payload.roleId,
+        roleSlug: payload.roleSlug,
+        permissions: payload.permissions, // ✅ From JWT token
+      };
+    }
+
+    // Fallback: Query database if no permissions in JWT (backward compatibility)
     const user = await this.userModel
       .findById(payload.sub)
       .select('-password')
@@ -400,44 +424,18 @@ export class AdminUserService implements OnModuleInit {
       throw new NotFoundException('User not found');
     }
 
+    // Verify current password
     const isPasswordValid = await bcrypt.compare(input.currentPassword, user.password);
     if (!isPasswordValid) {
       throw new BadRequestException('Current password is incorrect');
     }
 
-    const hashedPassword = await bcrypt.hash(input.newPassword, 10);
-    await this.userModel.findByIdAndUpdate(userId, { password: hashedPassword });
+    // Hash and set new password
+    user.password = await bcrypt.hash(input.newPassword, 10);
+    await user.save();
+
+    this.logger.log(`User ${user.email} changed password`);
 
     return true;
-  }
-
-  // Check if user has permission for a specific action
-  async hasPermission(userId: string, permissionSlug: string, action: string): Promise<boolean> {
-    const user = await this.userModel
-      .findById(userId)
-      .populate({
-        path: 'role',
-        populate: {
-          path: 'permissions.permission',
-          model: 'Permission',
-        },
-      })
-      .exec();
-
-    if (!user || !user.isActive) return false;
-
-    const role = user.role as any;
-    if (!role || !role.isActive) return false;
-
-    const rolePermission = (role.permissions || []).find(
-      (p: any) => p.permission?.slug === permissionSlug,
-    );
-
-    if (!rolePermission) return false;
-
-    // MANAGE action gives full access
-    if (rolePermission.actions.includes(PermissionAction.MANAGE)) return true;
-
-    return rolePermission.actions.includes(action);
   }
 }
