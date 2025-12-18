@@ -774,6 +774,7 @@ type Mutation {
   applyCoupon(code: String!): Cart!
   removeCoupon: Cart!
   createCoupon(input: CreateCouponInput!): Coupon!
+  deleteCoupon(id: String!): Coupon!
   createOrUpdateCharges(input: CreateChargesInput!): Charges!
   initiatePayment(input: InitiatePaymentInput!): InitiatePaymentResponse!
   initiateUpiQrPayment(input: InitiateUpiQrPaymentInput!): InitiateUpiQrPaymentResponse!

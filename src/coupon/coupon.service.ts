@@ -83,4 +83,12 @@ export class CouponService {
       ]
     }).sort({ createdAt: -1 }).exec();
   }
+
+  async deleteCoupon(id: string): Promise<Coupon> {
+    const coupon = await this.couponModel.findByIdAndDelete(id);
+    if (!coupon) {
+      throw new NotFoundException('Coupon not found');
+    }
+    return coupon;
+  }
 }
